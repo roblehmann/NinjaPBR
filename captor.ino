@@ -1,3 +1,9 @@
+// CAPTOR
+// Cyanobacterial Arduino-based PhotobioreacTOR
+//
+// bioreactor firmware for the Arduino-based photobioreactor v0.1
+// Author: r.lehmann@biologie.hu-berlin.de
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
@@ -26,11 +32,11 @@
 
 //----------CONSTANTS-LIGHT REGULATION ------- //
 // status variable marking circadian phase
-#define PHASE_MORNING 1 // defined as DL transition
-#define PHASE_DAY 2 // defined as max. light intensity
-#define PHASE_EVENING 3 // defined as LD transition
-#define PHASE_NIGHT   4 // defined as min. light intensity
-#define PHASE_NONE    5 // if no circadian program is used
+const byte PHASE_MORNING = 0; // defined as DL transition
+const byte PHASE_DAY     = 1; // defined as max. light intensity
+const byte PHASE_EVENING = 2; // defined as LD transition
+const byte PHASE_NIGHT   = 3; // defined as min. light intensity
+const byte PHASE_NONE    = 4; // if no circadian program is used
 
 //const String PHASE_NAMES[] = {
 //  "PHASE_MORNING","PHASE_EVENING","PHASE_NIGHT","PHASE_NONE"};
@@ -41,12 +47,12 @@ Timer t;
 //----------GLOBAL VARIABLES--------- //
 //global variables used by functions and are set by WebUI
 boolean DEBUG = true;
-int BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
-int bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
+byte BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+byte bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
 
 // LIGHT REGULATION //
-int minLightBrightness = 0;
-int maxLightBrightness = 255;
+byte minLightBrightness = 0;
+byte maxLightBrightness = 255;
 // 13,5cm Bottle-Panel and full brightness with 22V = 60 micromol
 //0: 1.32
 //10: 6.08
@@ -75,28 +81,35 @@ int maxLightBrightness = 255;
 //240:57.94
 //250:59.4
 
-int lightBrightness = 0;       // holds brightness of LED panel in range 0-255 (0=off)
-int lightChangeStep = 25;       // how strong the light intensity changes between two consecutive steps
-double lightChangeStepLength = 1; // how long should a step to the next light level be  /seconds
-int dayPhase = PHASE_NONE;     // holds whether it is MORNING, EVENING, or NIGHT
+byte lightBrightness = 0;       // holds brightness of LED panel in range 0-255 (0=off)
+byte lightChangeStep = 25;       // how strong the light intensity changes between two consecutive steps
+unsigned long lightChangeStepLength = 1L; // how long should a step to the next light level be  /seconds
+byte dayPhase = PHASE_NONE;     // holds whether it is MORNING, EVENING, or NIGHT
 
-unsigned long PHASE_MORNING_DURATION  = 10; // defined as DL transition /seconds
-unsigned long PHASE_DAY_DURATION      = 1; // defined as max. light intensity /seconds
-unsigned long PHASE_EVENING_DURATION  = 10; // defined as LD transition /seconds
-unsigned long PHASE_NIGHT_DURATION    = 11; // defined as min. light intensity /seconds
+// Duration: MORNING, DAY, EVENING, NIGHT in SEC!
+unsigned long PHASE_DURATIONS[4] = {
+  10L, 1L, 10L, 11L};
+
+//unsigned long PHASE_MORNING_DURATION  = 10L; // defined as DL transition /seconds
+//unsigned long PHASE_DAY_DURATION      = 1L; // defined as max. light intensity /seconds
+//unsigned long PHASE_EVENING_DURATION  = 10L; // defined as LD transition /seconds
+//unsigned long PHASE_NIGHT_DURATION    = 11L; // defined as min. light intensity /seconds
 
 // air pump regulation 
 boolean airPumpState;
 
 // how often to measure od/temp
-int sensorSamplingTime = 2; //seconds
+unsigned long sensorSamplingTime = 2L; //seconds
 
 // store timer IDs, to be able to remove them when the BIOREACTOR_MODE or the light-change-params change
+int dayPhaseChangeTimerID = -1;
 int lightChangeTimerID = -1;
 int sensorReadTimerID = -1;
 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
+// for logging
+const String sep = ",";
 
 //----------------------------- //
 //----------setting up--------- //
@@ -142,7 +155,7 @@ void checkChangedReactorMode ()
     case BIOREACTOR_STANDBY_MODE: 
       { 
         // to go into standby, need to switch off light, remove timers for day phase/light change
-        if(DEBUG) Serial.println("standby mode");
+        if(DEBUG) Serial.println("standby");
         // deactivate air pump 
         stopAirPump();
         // switch off light, remove timers
@@ -152,7 +165,7 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_CIRCADIAN_MODE:
       {
-        if(DEBUG) Serial.println("circadian mode");
+        if(DEBUG) Serial.println("circadian");
         // activate air pump 
         startAirPump() ;
         // ------------ Adding timed actions ----------
@@ -162,7 +175,7 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_LIGHT_MODE:
       {
-        if(DEBUG) Serial.println("light mode");
+        if(DEBUG) Serial.println("light");
         startAirPump() ;
         lightOn();
         startSensorReadTimer();
@@ -170,7 +183,7 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_DARK_MODE:  
       {
-        if(DEBUG) Serial.println("dark mode");
+        if(DEBUG) Serial.println("dark");
         startAirPump() ;
         lightOff();
         startSensorReadTimer();
@@ -178,14 +191,14 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_ERROR_MODE:
       {
-        if(DEBUG) Serial.println("ERROR mode");
+        if(DEBUG) Serial.println("ERROR");
         stopAirPump() ;
         lightOff();
         stopSensorReadTimer();
         break;
       }
     default:
-      Serial.println("unknown->ERROR mode");
+      Serial.println("unknown->ERROR");
       BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
       stopAirPump() ;
       lightOff();
@@ -247,7 +260,6 @@ void digestMessage()
 
   if(paramName == "MODE") // which reactor program to use
   {
-    Serial.println("adjusting BIOREACTOR_MODE");
     switch(paramValue) 
     {
     case 1:
@@ -272,11 +284,9 @@ void digestMessage()
     // should be in range 1-255
   {
     if(paramValue < 1) {
-      //     if(DEBUG) Serial.println("lightChangeStep should be in range 1-255. Setting to 1, instead.");
       lightChangeStep = 1;
     } 
     else if(paramValue > 255) {
-      //      if(DEBUG) Serial.println("lightChangeStep should be in range 1-255. Setting to 255, instead.");
       lightChangeStep = 255;
     } 
     else {
@@ -285,55 +295,37 @@ void digestMessage()
   }
   else if(paramName == "lightChangeStepLength") // how long to keep each brightness increment
   {
-    //    if(DEBUG) Serial.println("Updating lightChangeStepLength.");
     lightChangeStepLength = paramValue;
   }
   else if(paramName == "morningLength") // duration of morning, evening, and night
   {
-    //    if(DEBUG) Serial.println("Updating dayPhaseLength.");    
-    PHASE_MORNING_DURATION = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers    
-    BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+    PHASE_DURATIONS[PHASE_MORNING] = paramValue;
   }
   else if(paramName == "dayLength") // duration of morning, evening, and night
   {
-    //    if(DEBUG) Serial.println("Updating dayPhaseLength.");    
-    PHASE_DAY_DURATION = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers    
-    BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+    PHASE_DURATIONS[PHASE_DAY] = paramValue;
   }
   else if(paramName == "eveningLength") // duration of morning, evening, and night
   {
-    //    if(DEBUG) Serial.println("Updating dayPhaseLength.");    
-    PHASE_EVENING_DURATION = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers    
-    BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+    PHASE_DURATIONS[PHASE_EVENING] = paramValue;
   }
   else if(paramName == "nightLength") // duration of morning, evening, and night
   {
-    //    if(DEBUG) Serial.println("Updating dayPhaseLength.");    
-    PHASE_NIGHT_DURATION = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers    
-    BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+    PHASE_DURATIONS[PHASE_NIGHT] = paramValue;
   }
   else if(paramName == "sensorSamplingTime") // how often to sample
   {
-    //    if(DEBUG) Serial.println("Updating sensorSamplingTime.");    
     sensorSamplingTime = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers
-    BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+    stopSensorReadTimer(); // restart sampling timer, to avoid having to go to 
+    startSensorReadTimer(); // standby mode and reinit reactor mode
   }
   else if(paramName == "maxLightBrightness") // maximal brightness of the LED panel
   {
-    //    if(DEBUG) Serial.println("Updating sensorSamplingTime.");    
     maxLightBrightness = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers
   }
   else if(paramName == "minLightBrightness") // maximal brightness of the LED panel
   {
-    //    if(DEBUG) Serial.println("Updating sensorSamplingTime.");    
     minLightBrightness = paramValue;
-    // set to standby, since changed parameter takes effect only after reinitializing timers
   }
   else
   {
@@ -341,6 +333,10 @@ void digestMessage()
     Serial.println(paramName);
   }
 }
+
+
+
+
 
 
 

@@ -4,7 +4,7 @@ void pumpSetup()
   airPumpState = LOW;
   pinMode(pumpPin, OUTPUT);
   digitalWrite(pumpPin, airPumpState);
-  Serial.println("The air pump has been initialized.");
+  Serial.println("inited pump");
 }
 
 void startAirPump() 

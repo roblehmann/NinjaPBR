@@ -24,7 +24,7 @@ void startSensorReadTimer()
 
 void stopSensorReadTimer() 
 {
-  if(sensorReadTimerID > -1) 
+  if(sensorReadTimerID != -1) 
   {
     t.stop(sensorReadTimerID);
     sensorReadTimerID = -1;

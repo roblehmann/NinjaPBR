@@ -1,9 +1,7 @@
 void loggingSetup()
 {
-  Serial.println("Logging successfully initialized.");
+  Serial.println("Logging inited");
 }
-
-const String sep = ",";
 
 void loggingEvent()
 {
@@ -40,6 +38,25 @@ void loggingEvent()
 //  Serial.print(MODE_NAMES[BIOREACTOR_MODE-1]);
   Serial.print(BIOREACTOR_MODE);
   // end line
+//  Serial.println();
+  Serial.print(sep);
+  Serial.print(PHASE_DURATIONS[PHASE_MORNING]);
+  Serial.print(sep);
+  Serial.print(PHASE_DURATIONS[PHASE_DAY]);
+  Serial.print(sep);
+  Serial.print(PHASE_DURATIONS[PHASE_EVENING]);
+  Serial.print(sep);
+  Serial.print(PHASE_DURATIONS[PHASE_NIGHT]);
+  Serial.print(sep);
+  Serial.print(lightChangeStep);  
+  Serial.print(sep);
+  Serial.print(lightChangeStepLength);
+  Serial.print(sep);
+  Serial.print(minLightBrightness);
+  Serial.print(sep);
+  Serial.print(maxLightBrightness);
+  Serial.print(sep);
+  Serial.print(sensorSamplingTime);  
   Serial.println();
 }
 

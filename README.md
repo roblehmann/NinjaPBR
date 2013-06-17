@@ -1,2 +1,4 @@
-cyporg
+CAPTOR
+
+Cyanobacterial Arduino-based PhotobioreacTOR
 ======

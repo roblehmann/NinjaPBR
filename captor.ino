@@ -7,6 +7,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
+#include <Servo.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   1   // nothing on, nothing measured
@@ -22,6 +23,7 @@
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS-GAS--------- //
 #define  pumpPin    5  // Pump connected to pwm pin 5
+#define  airValvePin 9
 //----------CONSTANTS-OD--------- //
 #define  irPin      8  //IR-Emitter diode
 #define  odPin      A0  // OD detector diode
@@ -99,6 +101,9 @@ unsigned long PHASE_DURATIONS[4] = {
 // AIR PUMP REGULATION //
 boolean airPumpState;
 const byte pumpSpeed = 140; // 0-255 PWM signal to adjust pump voltage to 1.5V average
+Servo airValve;
+#define airValveOpen 0
+#define airValveClosed 90
 
 // how often to measure od/temp
 unsigned long sensorSamplingTime = 2L; //seconds

@@ -1,5 +1,6 @@
 void lightSetup()
 {
+  pinMode(ledPin, OUTPUT);
   // initially switch light off
   lightOff();
   Serial.println("inited light");
@@ -110,7 +111,7 @@ void startCircadianLightTimers()
     lightChangeTimerID = -1;      // mark timer as not set
   }
   lightChangeTimerID = t.every(long(lightChangeStepLength) * 1000L, lightUpdate); // adjust light brightness
-  dayPhase = PHASE_NIGHT;
+  dayPhase = PHASE_MORNING;
   dayPhaseUpdate(); // advance day phase
 }
 

@@ -21,7 +21,7 @@
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS-GAS--------- //
-#define  pumpPin    4  // Pump connected to digital pin 4
+#define  pumpPin    5  // Pump connected to pwm pin 5
 //----------CONSTANTS-OD--------- //
 #define  irPin      8  //IR-Emitter diode
 #define  odPin      A0  // OD detector diode
@@ -95,8 +95,10 @@ unsigned long PHASE_DURATIONS[4] = {
 //unsigned long PHASE_EVENING_DURATION  = 10L; // defined as LD transition /seconds
 //unsigned long PHASE_NIGHT_DURATION    = 11L; // defined as min. light intensity /seconds
 
-// air pump regulation 
+
+// AIR PUMP REGULATION //
 boolean airPumpState;
+const byte pumpSpeed = 140; // 0-255 PWM signal to adjust pump voltage to 1.5V average
 
 // how often to measure od/temp
 unsigned long sensorSamplingTime = 2L; //seconds

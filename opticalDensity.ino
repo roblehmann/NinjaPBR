@@ -23,8 +23,9 @@ void odUpdate()
 { 
   Vcc = readVcc() / 1000.0;
   analogWrite(ledPin, 0); 
-  digitalWrite(pumpPin, LOW);
-  delay(50);
+  boolean orig_pump_state = airPumpState; // remember if pump was active before OD measurement
+  stopAirPump();
+  delay(500);
   odValBg =  analogRead(odPin) / 1023.0 * Vcc;
   odVal2Bg =  analogRead(odPin2) / 1023.0 * Vcc;
   odVal3Bg =  analogRead(odPin3) / 1023.0 * Vcc;
@@ -37,13 +38,10 @@ void odUpdate()
   odVal2 =  analogRead(odPin2) / 1023.0 * Vcc;
   odVal3 =  analogRead(odPin3) / 1023.0 * Vcc;
   digitalWrite(irPin, LOW);
-  digitalWrite(pumpPin, airPumpState); // set pump back to pervious state (can be on/off)
+
+  if(orig_pump_state == HIGH)
+    startAirPump();
   analogWrite(ledPin, lightBrightness);
-  //  if(DEBUG)
-  //  {
-  //    Serial.print("The measured optical density of the liquid is: "); 
-  //    Serial.println(odVal);
-  //  }
 }
 
 float od()
@@ -90,4 +88,5 @@ long readVcc() {
   result = 1125300L / result; // Back-calculate AVcc in mV
   return result;
 }
+
 

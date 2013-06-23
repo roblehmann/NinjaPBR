@@ -3,21 +3,22 @@ void pumpSetup()
   // setup pump
   airPumpState = LOW;
   pinMode(pumpPin, OUTPUT);
-  digitalWrite(pumpPin, airPumpState);
+  analogWrite(pumpPin, 0);
   Serial.println("inited pump");
 }
 
-void startAirPump() 
+void startAirPump()
 {
   airPumpState = HIGH;
-  digitalWrite(pumpPin, airPumpState);
-
+  analogWrite(pumpPin, pumpSpeed);
 }
 
 void stopAirPump() 
 {
   airPumpState = LOW;
-  digitalWrite(pumpPin, airPumpState);
-
+  analogWrite(pumpPin, 0);
 }
+
+
+
 

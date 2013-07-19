@@ -13,12 +13,12 @@ float temperatureInLiquid = 0.0;
 
 void temperatureSetup()
 {
-  Serial.println("inited temp.");
+//  Serial.println("inited temp.");
 
   dsInLiquid.begin();
   if (!dsInLiquid.getAddress(deviceAddressInLiquid, 0)) {
     BIOREACTOR_MODE=BIOREACTOR_ERROR_MODE;
-    Serial.println("ERROR in temp. sensor");
+//    Serial.println("ERROR in temp. sensor");
   } 
   else {
     dsInLiquid.setWaitForConversion(false);
@@ -26,7 +26,7 @@ void temperatureSetup()
     dsInLiquid.requestTemperatures();
   }
   // We want to be sure that the conversion has been done
-  delay(400);
+  delay(delayFourhundred);
 }
 
 void temperatureUpdate()

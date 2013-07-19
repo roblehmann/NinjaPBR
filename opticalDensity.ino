@@ -1,77 +1,62 @@
-// foreground od measurements
-float odVal = 0.0;
-float odVal2 = 0.0;
-float odVal3 = 0.0;
-// for mean od calc.
-float odtmp[3]; 
-// background od measurements
-float odValBg = 0.0;
-float odVal2Bg = 0.0;
-float odVal3Bg = 0.0;
 
-double Vcc;
+double Vcc = .0;
+float  sample = .0;
 
 void odSetup()
 {
-  pinMode(irPin, OUTPUT);
-  digitalWrite(irPin, LOW);  
-  Serial.println("OD inited");
+  pinMode(ir850Pin, OUTPUT);
+  digitalWrite(ir850Pin, LOW);    
+  pinMode(ir740Pin, OUTPUT);
+  digitalWrite(ir740Pin, LOW);
+  pinMode(redPin, OUTPUT);
+  digitalWrite(redPin, LOW);    
+  pinMode(greenPin, OUTPUT);
+  digitalWrite(greenPin, LOW);    
+  pinMode(bluePin, OUTPUT);
+  digitalWrite(bluePin, LOW);    
+//  Serial.println("OD inited");
 }
 
 // reads OD value and writes in global state variable
 void odUpdate()
 { 
-  Vcc = readVcc() / 1000.0;
-  analogWrite(ledPin, 0); 
-  boolean orig_pump_state = airPumpState; // remember if pump was active before OD measurement
+  // remember if pump was active before OD measurement, then deactivate
+  boolean orig_pump_state = airPumpState; 
   stopAirPump();
-  delay(500);
-  odValBg =  analogRead(odPin) / 1023.0 * Vcc;
-  odVal2Bg =  analogRead(odPin2) / 1023.0 * Vcc;
-  odVal3Bg =  analogRead(odPin3) / 1023.0 * Vcc;
-  digitalWrite(irPin, HIGH);
-  delay(500);
-  for(int i=0; i<3; i++) {
-    odtmp[i] =  analogRead(odPin) / 1023.0 * Vcc;
-  }
-  odVal = (odtmp[0] + odtmp[1] + odtmp[2]) / 3;
-  odVal2 =  analogRead(odPin2) / 1023.0 * Vcc;
-  odVal3 =  analogRead(odPin3) / 1023.0 * Vcc;
-  digitalWrite(irPin, LOW);
 
+  Vcc = readVcc() / thousand;
+  analogWrite(ledPin, 0); 
+
+  delay(thousand);
+  odValBg =  analogRead(odPin) / valDiv * Vcc;
+  odVal2Bg =  analogRead(odPin2) / valDiv * Vcc;
+
+  for(int i=numLeds-1; i >= 0; i--)
+    readOdSensors(i);
+
+  // put air pump back in original state
   if(orig_pump_state == HIGH)
     startAirPump();
   analogWrite(ledPin, lightBrightness);
 }
 
-float od()
+//take the sample from the two sensors
+void readOdSensors(int idx)
 {
-  return odVal;
+  digitalWrite(ledPins[idx], HIGH);
+  delay(delayFourhundred);
+  od1Values[idx] = readSensor(odPin);
+  od2Values[idx] = readSensor(odPin2);
+  digitalWrite(ledPins[idx], LOW);
 }
 
-float od2()
+float readSensor(int sensorPin)
 {
-  return odVal2;
-}
-
-float od3()
-{
-  return odVal3;
-}
-
-float odBg()
-{
-  return odValBg;
-}
-
-float od2Bg()
-{
-  return odVal2Bg;
-}
-
-float od3Bg()
-{
-  return odVal3Bg;
+  analogRead(sensorPin);  // discard first value from sensor
+  sample = .0;
+  for(int i=0; i<numReadingsAverage; i++)
+    sample = sample + (analogRead(sensorPin) / valDiv * Vcc);
+  return(sample / numReadingsAverage);
 }
 
 // taken from
@@ -88,5 +73,7 @@ long readVcc() {
   result = 1125300L / result; // Back-calculate AVcc in mV
   return result;
 }
+
+
 
 

@@ -23,12 +23,23 @@
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS-GAS--------- //
 #define  pumpPin    5  // Pump connected to pwm pin 5
-#define  airValvePin 9
+#define  airValvePin 6
 //----------CONSTANTS-OD--------- //
-#define  irPin      8  //IR-Emitter diode
+#define  ir850Pin      12  //IR-Emitter diode
+#define  ir740Pin      8  //IR-Emitter diode
+#define  greenPin   7  //Red-Emitter diode
+#define  bluePin    9  //Red-Emitter diode
+#define  redPin     10  //Red-Emitter diode
 #define  odPin      A0  // OD detector diode
-#define  odPin2      A1  // OD detector diode
-#define  odPin3      A2  // OD detector diode
+#define  odPin2     A1  // OD detectpor diode
+
+const int ledPins[] = {12, 8, 10, 7, 9};
+
+// space saver defines
+#define delayFourhundred 400
+#define timerNotSet -1
+#define thousand 1000L
+
 //----------CONSTANTS-TEMPERATURE--------- //
 #define PIN_TEMPERATURE_SENSOR_IN_LIQUID  2   // temperature on culure bottle
 
@@ -88,25 +99,33 @@ byte lightChangeStep = 25;       // how strong the light intensity changes betwe
 unsigned long lightChangeStepLength = 1L; // how long should a step to the next light level be  /seconds
 byte dayPhase = PHASE_NONE;     // holds whether it is MORNING, EVENING, or NIGHT
 
-// Duration: MORNING, DAY, EVENING, NIGHT in SEC!
+// Duration: MORNING (DL transition), DAY (max light), EVENING (LD transition), NIGHT (min light) in SEC!
 unsigned long PHASE_DURATIONS[4] = {
   10L, 1L, 10L, 11L};
 
-//unsigned long PHASE_MORNING_DURATION  = 10L; // defined as DL transition /seconds
-//unsigned long PHASE_DAY_DURATION      = 1L; // defined as max. light intensity /seconds
-//unsigned long PHASE_EVENING_DURATION  = 10L; // defined as LD transition /seconds
-//unsigned long PHASE_NIGHT_DURATION    = 11L; // defined as min. light intensity /seconds
+// OD MEASUREMENTS //
+// foreground od measurements
+#define numLeds 5
+#define numReadingsAverage 5.0
+#define valDiv 1023.0
+// ir850, ir740, red, green, blue
+float od1Values[5];
+float od2Values[5];
+
+// background od measurements
+float odValBg = 0.0;
+float odVal2Bg = 0.0;
+
 
 
 // AIR PUMP REGULATION //
 boolean airPumpState;
-const byte pumpSpeed = 140; // 0-255 PWM signal to adjust pump voltage to 1.5V average
 Servo airValve;
-#define airValveOpen 0
-#define airValveClosed 90
+#define airValveOpenAngle 8
+#define airValveClosedAngle 64
 
 // how often to measure od/temp
-unsigned long sensorSamplingTime = 2L; //seconds
+unsigned long sensorSamplingTime = 10L; //seconds
 
 // store timer IDs, to be able to remove them when the BIOREACTOR_MODE or the light-change-params change
 int dayPhaseChangeTimerID = -1;

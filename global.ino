@@ -11,9 +11,9 @@ void updateSensorLogValues()
 // if a measuring timer was already active, dont change anything
 void startSensorReadTimer() 
 {
-  if(sensorReadTimerID == -1) 
+  if(sensorReadTimerID == timerNotSet) 
   {
-    sensorReadTimerID = t.every(sensorSamplingTime * 1000,updateSensorLogValues);
+    sensorReadTimerID = t.every(sensorSamplingTime * thousand,updateSensorLogValues);
   } 
 //  else 
 //  {
@@ -24,10 +24,10 @@ void startSensorReadTimer()
 
 void stopSensorReadTimer() 
 {
-  if(sensorReadTimerID != -1) 
+  if(sensorReadTimerID != timerNotSet) 
   {
     t.stop(sensorReadTimerID);
-    sensorReadTimerID = -1;
+    sensorReadTimerID = timerNotSet;
   }
 //  else
 //  {

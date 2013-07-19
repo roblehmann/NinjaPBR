@@ -3,7 +3,7 @@ void lightSetup()
   pinMode(ledPin, OUTPUT);
   // initially switch light off
   lightOff();
-  Serial.println("inited light");
+//  Serial.println("inited light");
 }
 
 // should be called every 'lightChangeStepLength' millisecs.
@@ -57,13 +57,7 @@ void dayPhaseUpdate()
     dayPhase += 1; 
     if(dayPhase > PHASE_NIGHT) dayPhase = PHASE_MORNING; // if last phase of day (night), start new day (morning)
     // set new timer until next day phase change
-    dayPhaseChangeTimerID = t.after(long(PHASE_DURATIONS[dayPhase]) * 1000L, dayPhaseUpdate);
-    Serial.print("Phase:");
-    Serial.print(dayPhase);    
-    Serial.print(" TimerID:");
-    Serial.print(dayPhaseChangeTimerID);
-    Serial.print(" duration:");
-    Serial.println(long(PHASE_DURATIONS[dayPhase]) * 1000L);
+    dayPhaseChangeTimerID = t.after(long(PHASE_DURATIONS[dayPhase]) * thousand, dayPhaseUpdate);
   }
 }
 
@@ -74,13 +68,13 @@ void lightOff()
   lightBrightness = minLightBrightness;
   // write to pin, to make it effective immediately
   analogWrite(ledPin, lightBrightness);
-  if(dayPhaseChangeTimerID != -1) {
+  if(dayPhaseChangeTimerID != timerNotSet) {
     t.stop(dayPhaseChangeTimerID);
-    dayPhaseChangeTimerID = -1;
+    dayPhaseChangeTimerID = timerNotSet;
   }
-  if(lightChangeTimerID != -1) {    // remove if set before
+  if(lightChangeTimerID != timerNotSet) {    // remove if set before
     t.stop(lightChangeTimerID); 
-    lightChangeTimerID = -1;
+    lightChangeTimerID = timerNotSet;
   }
   dayPhase = PHASE_NONE;        // no day phases needed
 }
@@ -92,13 +86,13 @@ void lightOn()
   lightBrightness = maxLightBrightness;
   // write to pin, to make it effective immediately
   analogWrite(ledPin, lightBrightness);
-  if(dayPhaseChangeTimerID != -1) {
+  if(dayPhaseChangeTimerID != timerNotSet) {
     t.stop(dayPhaseChangeTimerID);
-    dayPhaseChangeTimerID = -1;
+    dayPhaseChangeTimerID = timerNotSet;
   }
-  if(lightChangeTimerID != -1) {    // remove if set before
+  if(lightChangeTimerID != timerNotSet) {    // remove if set before
     t.stop(lightChangeTimerID); 
-    lightChangeTimerID = -1;      // mark timer as not set
+    lightChangeTimerID = timerNotSet;      // mark timer as not set
   }
   dayPhase = PHASE_NONE;        // no day phases needed
 }
@@ -106,12 +100,12 @@ void lightOn()
 //---------  circadian light regulation setup --------------//
 void startCircadianLightTimers() 
 {
-  if(lightChangeTimerID != -1) {    // remove if set before
+  if(lightChangeTimerID != timerNotSet) {    // remove if set before
     t.stop(lightChangeTimerID); 
-    lightChangeTimerID = -1;      // mark timer as not set
+    lightChangeTimerID = timerNotSet;      // mark timer as not set
   }
-  lightChangeTimerID = t.every(long(lightChangeStepLength) * 1000L, lightUpdate); // adjust light brightness
-  dayPhase = PHASE_MORNING;
+  lightChangeTimerID = t.every(long(lightChangeStepLength) * thousand, lightUpdate); // adjust light brightness
+  dayPhase = PHASE_NIGHT;
   dayPhaseUpdate(); // advance day phase
 }
 

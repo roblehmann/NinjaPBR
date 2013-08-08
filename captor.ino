@@ -348,10 +348,12 @@ void digestMessage()
   else if(paramName == "maxLightBrightness") // maximal brightness of the LED panel
   {
     maxLightBrightness = paramValue;
+    lightUpdate();
   }
   else if(paramName == "minLightBrightness") // maximal brightness of the LED panel
   {
     minLightBrightness = paramValue;
+    lightUpdate();
   }
   else
   {

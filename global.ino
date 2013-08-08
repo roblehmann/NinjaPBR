@@ -15,11 +15,6 @@ void startSensorReadTimer()
   {
     sensorReadTimerID = t.every(sensorSamplingTime * thousand,updateSensorLogValues);
   } 
-//  else 
-//  {
-//    if(DEBUG)
-//      Serial.println("sensorReadTimer already exists, returning...");
-//  }
 }
 
 void stopSensorReadTimer() 
@@ -29,11 +24,6 @@ void stopSensorReadTimer()
     t.stop(sensorReadTimerID);
     sensorReadTimerID = timerNotSet;
   }
-//  else
-//  {
-//    if(DEBUG)
-//      Serial.println("sensorReadTimer not active, returning...");
-//  }
 }
 
 

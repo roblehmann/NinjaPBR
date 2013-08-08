@@ -3,7 +3,7 @@ void lightSetup()
   pinMode(ledPin, OUTPUT);
   // initially switch light off
   lightOff();
-//  Serial.println("inited light");
+  //  Serial.println("inited light");
 }
 
 // should be called every 'lightChangeStepLength' millisecs.
@@ -41,10 +41,21 @@ void lightUpdate()
         BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
         break;
       }
+      break;
     }
-  default: // for every other reactor mode, the lightBrightness has been set before, just make sure that the value is written to pin
-    analogWrite(ledPin, lightBrightness);
-    break;
+  case BIOREACTOR_LIGHT_MODE:
+    {
+      lightOn();
+      break;
+    }
+  case BIOREACTOR_DARK_MODE | BIOREACTOR_ERROR_MODE:
+    {
+      lightOff();
+      break;
+    }
+//  default: // for every other reactor mode, the lightBrightness has been set before, just make sure that the value is written to pin
+//    analogWrite(ledPin, lightBrightness);
+//    break;
   }
 }
 
@@ -108,6 +119,7 @@ void startCircadianLightTimers()
   dayPhase = PHASE_NIGHT;
   dayPhaseUpdate(); // advance day phase
 }
+
 
 
 

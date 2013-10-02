@@ -1,11 +1,10 @@
 void loggingSetup()
 {
-//  Serial.println("Logging inited");
+// nothing to do for me here...
 }
 
 void loggingEvent()
 {
-  //  if (DEBUG) Serial.println("logging...");
   // send to computer
   Serial.print("DATA,");
   for(int i=0; i < numLeds; i++)

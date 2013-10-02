@@ -3,7 +3,6 @@ void lightSetup()
   pinMode(ledPin, OUTPUT);
   // initially switch light off
   lightOff();
-  //  Serial.println("inited light");
 }
 
 // should be called every 'lightChangeStepLength' millisecs.

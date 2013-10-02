@@ -14,7 +14,6 @@ void odSetup()
   digitalWrite(greenPin, LOW);    
   pinMode(bluePin, OUTPUT);
   digitalWrite(bluePin, LOW);    
-//  Serial.println("OD inited");
 }
 
 // reads OD value and writes in global state variable
@@ -26,10 +25,7 @@ void odUpdate()
 
   Vcc = readVcc() / thousand;
   analogWrite(ledPin, 0); 
-
-  delay(thousand);
-  odValBg =  analogRead(odPin) / valDiv * Vcc;
-  odVal2Bg =  analogRead(odPin2) / valDiv * Vcc;
+  delay(thousand); // wait for bubbling to settle
 
   for(int i=numLeds-1; i >= 0; i--)
     readOdSensors(i);
@@ -41,13 +37,17 @@ void odUpdate()
 }
 
 //take the sample from the two sensors
-void readOdSensors(int idx)
+void readOdSensors(int emitterIdx)
 {
-  digitalWrite(ledPins[idx], HIGH);
-  delay(delayFourhundred);
-  od1Values[idx] = readSensor(odPin);
-  od2Values[idx] = readSensor(odPin2);
-  digitalWrite(ledPins[idx], LOW);
+  delay(200);
+  odValBg  = readSensor(odPin);
+  odVal2Bg = readSensor(odPin2);
+
+  digitalWrite(ledPins[emitterIdx], HIGH);
+  delay(200);
+  od1Values[emitterIdx] = readSensor(odPin)  - odValBg;
+  od2Values[emitterIdx] = readSensor(odPin2) - odVal2Bg;
+  digitalWrite(ledPins[emitterIdx], LOW);
 }
 
 float readSensor(int sensorPin)
@@ -73,6 +73,12 @@ long readVcc() {
   result = 1125300L / result; // Back-calculate AVcc in mV
   return result;
 }
+
+
+
+
+
+
 
 
 

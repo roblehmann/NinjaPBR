@@ -22,8 +22,9 @@
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS-GAS--------- //
-#define  pumpPin    5  // Pump connected to pwm pin 5
 #define  airValvePin 6
+//----------CONSTANTS-MEDIUM--------- //
+#define  mediumPumpPin 5
 //----------CONSTANTS-OD--------- //
 #define  ir850Pin      12  //IR-Emitter diode
 #define  ir740Pin      8  //IR-Emitter diode
@@ -51,48 +52,17 @@ const byte PHASE_EVENING = 2; // defined as LD transition
 const byte PHASE_NIGHT   = 3; // defined as min. light intensity
 const byte PHASE_NONE    = 4; // if no circadian program is used
 
-//const String PHASE_NAMES[] = {
-//  "PHASE_MORNING","PHASE_EVENING","PHASE_NIGHT","PHASE_NONE"};
-
 //----------TIMER DECLARATION--------- //
 Timer t;
 
 //----------GLOBAL VARIABLES--------- //
-//global variables used by functions and are set by WebUI
-boolean DEBUG = true;
+//global variables used by functions and are set by GUI
 byte BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
 byte bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
 
 // LIGHT REGULATION //
 byte minLightBrightness = 0;
 byte maxLightBrightness = 255;
-// 13,5cm Bottle-Panel and full brightness with 22V = 60 micromol
-//0: 1.32
-//10: 6.08
-//20: 8.38
-//30: 10.69
-//40: 12.99
-//50: 15.3
-//60: 17.59
-//70: 19.88
-//80: 22.14
-//90: 24.44
-//100: 26.73
-//110: 29.01
-//120: 31.3
-//130: 33.6
-//140: 35.9
-//150: 38.18
-//160: 40.45
-//170: 42.73
-//180: 44.98
-//190: 47.22
-//200: 49.46
-//210: 51.71
-//220:53.92
-//230:56.04
-//240:57.94
-//250:59.4
 
 byte lightBrightness = 0;       // holds brightness of LED panel in range 0-255 (0=off)
 byte lightChangeStep = 25;       // how strong the light intensity changes between two consecutive steps
@@ -106,7 +76,7 @@ unsigned long PHASE_DURATIONS[4] = {
 // OD MEASUREMENTS //
 // foreground od measurements
 #define numLeds 5
-#define numReadingsAverage 5.0
+#define numReadingsAverage 8.0
 #define valDiv 1023.0
 // ir850, ir740, red, green, blue
 float od1Values[5];
@@ -115,8 +85,6 @@ float od2Values[5];
 // background od measurements
 float odValBg = 0.0;
 float odVal2Bg = 0.0;
-
-
 
 // AIR PUMP REGULATION //
 boolean airPumpState;
@@ -143,8 +111,7 @@ const String sep = ",";
 void setup()  {
   // for serial input message
   inputString.reserve(50);
-
-  // init serial for OD
+  // init serial connection to controlling computer
   Serial.begin(9600);
   lightSetup();
   temperatureSetup();
@@ -181,7 +148,6 @@ void checkChangedReactorMode ()
     case BIOREACTOR_STANDBY_MODE: 
       { 
         // to go into standby, need to switch off light, remove timers for day phase/light change
-        if(DEBUG) Serial.println("standby");
         // deactivate air pump 
         stopAirPump();
         // switch off light, remove timers
@@ -191,7 +157,6 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_CIRCADIAN_MODE:
       {
-        if(DEBUG) Serial.println("circadian");
         // activate air pump 
         startAirPump() ;
         // ------------ Adding timed actions ----------
@@ -201,7 +166,6 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_LIGHT_MODE:
       {
-        if(DEBUG) Serial.println("light");
         startAirPump() ;
         lightOn();
         startSensorReadTimer();
@@ -209,7 +173,6 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_DARK_MODE:  
       {
-        if(DEBUG) Serial.println("dark");
         startAirPump() ;
         lightOff();
         startSensorReadTimer();
@@ -217,7 +180,6 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_ERROR_MODE:
       {
-        if(DEBUG) Serial.println("ERROR");
         stopAirPump() ;
         lightOff();
         stopSensorReadTimer();
@@ -236,34 +198,26 @@ void checkChangedReactorMode ()
 }
 
 /*
-  SerialEvent occurs whenever a new data comes in the
- hardware serial RX.  This routine is run between each
- time loop() runs, so using delay inside loop can delay
- response.  Multiple bytes of data may be available.
+method is called when message comes via usb. incoming messages
+are collected until message terminating character is see, then 
+digestion is triggered
  */
 void serialEvent() {
   while (Serial.available()) {
-    // get the new byte:
-    char inChar = (char)Serial.read(); 
+    // read new byte
+    char inChar = (char) Serial.read(); 
     // add it to the inputString:
     inputString += inChar;
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '#') {
-      stringComplete = true;
-    }
+    // character "#" marks end of message, if seen trigger digestion
+    if (inChar == '#') stringComplete = true;
   }
 }
 
 
 void checkSerialMessage() {
   if (stringComplete) {
-    if (inputString != "") 
-    {
-      if(DEBUG) Serial.println(inputString);
-      // change setup according to message
+    if (inputString != "")       // change setup according to message
       digestMessage();
-    }
     // clear the string:
     inputString = "";
     stringComplete = false;
@@ -273,9 +227,12 @@ void checkSerialMessage() {
 char charBuf[30];
 String paramName;
 unsigned long paramValue;
-// method takes message from cotrolling computer and parses it, assigning the command 
-// value to the corresponding variable.
-// messages alsways contain the parameter name first, value second
+
+/* method takes message from controlling computer and parses it, assigning the 
+command value to the corresponding variable. 
+messages structure:
+parameterName:parameterValue#
+*/
 void digestMessage() 
 {
   inputString.toCharArray(charBuf, 30); 
@@ -354,6 +311,10 @@ void digestMessage()
   {
     minLightBrightness = paramValue;
     lightUpdate();
+  }
+  else if(paramName == "doDilution") // maximal brightness of the LED panel
+  {
+    doDilution(paramValue);
   }
   else
   {

@@ -16,9 +16,6 @@
 #define BIOREACTOR_CIRCADIAN_MODE 4   // light varies circadian, od/temp. measured
 #define BIOREACTOR_ERROR_MODE     5  // somewthing went wrong,switch off everything
 
-//const char* MODE_NAMES[] = {
-//  "BIOREACTOR_STANDBY_MODE","BIOREACTOR_LIGHT_MODE","BIOREACTOR_DARK_MODE",
-//  "BIOREACTOR_CIRCADIAN_MODE","BIOREACTOR_ERROR_MODE"};
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS-GAS--------- //
@@ -82,9 +79,17 @@ unsigned long PHASE_DURATIONS[4] = {
 float od1Values[5];
 float od2Values[5];
 
+//reference values for OD calculation
+// ir850, ir740, red, green, blue
+float od1RefValues[5] = {5,5,5,5,5};
+float od2RefValues[5] = {5,5,5,5,5};
+
 // background od measurements
 float odValBg = 0.0;
 float odVal2Bg = 0.0;
+
+// state flag, determining whether to measure reference value for OD calculation or OD values
+boolean readReferenceValues = false;
 
 // AIR PUMP REGULATION //
 boolean airPumpState;
@@ -102,8 +107,8 @@ int sensorReadTimerID = -1;
 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
-// for logging
-const String sep = ",";
+// for logging and communication
+const char* sep = ",";
 
 //----------------------------- //
 //----------setting up--------- //
@@ -236,14 +241,14 @@ parameterName:parameterValue#
 void digestMessage() 
 {
   inputString.toCharArray(charBuf, 30); 
-  paramName = strtok(charBuf,":");
-  paramValue = atol(strtok(NULL,":"));
+  paramName = strtok(charBuf,sep);
+  paramValue = atol(strtok(NULL,sep));
   Serial.println(paramName);
   Serial.println(paramValue);
 
-  if(paramName == "MODE") // which reactor program to use
+  if(paramName == "md") // which reactor program to use
   {
-    switch(paramValue) 
+    switch(paramValue)
     {
     case 1:
       BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
@@ -262,7 +267,7 @@ void digestMessage()
       break;
     }
   }
-  else if(paramName == "lightChangeStep") 
+  else if(paramName == "lcs") // light change step magnitude
     // brightness increments for morning/evening in circadian mode
     // should be in range 1-255
   {
@@ -276,49 +281,59 @@ void digestMessage()
       lightChangeStep = paramValue;
     }
   }
-  else if(paramName == "lightChangeStepLength") // how long to keep each brightness increment
+  else if(paramName == "lcsl") // how long to keep each brightness increment
   {
     lightChangeStepLength = paramValue;
   }
-  else if(paramName == "morningLength") // duration of morning, evening, and night
+  else if(paramName == "ml") // duration of morning, evening, and night
   {
     PHASE_DURATIONS[PHASE_MORNING] = paramValue;
   }
-  else if(paramName == "dayLength") // duration of morning, evening, and night
+  else if(paramName == "dl") // duration of morning, evening, and night
   {
     PHASE_DURATIONS[PHASE_DAY] = paramValue;
   }
-  else if(paramName == "eveningLength") // duration of morning, evening, and night
+  else if(paramName == "el") // duration of morning, evening, and night
   {
     PHASE_DURATIONS[PHASE_EVENING] = paramValue;
   }
-  else if(paramName == "nightLength") // duration of morning, evening, and night
+  else if(paramName == "nl") // duration of morning, evening, and night
   {
     PHASE_DURATIONS[PHASE_NIGHT] = paramValue;
   }
-  else if(paramName == "sensorSamplingTime") // how often to sample
+  else if(paramName == "sst") // how often to sample
   {
     sensorSamplingTime = paramValue;
     stopSensorReadTimer(); // restart sampling timer, to avoid having to go to 
     startSensorReadTimer(); // standby mode and reinit reactor mode
   }
-  else if(paramName == "maxLightBrightness") // maximal brightness of the LED panel
+  else if(paramName == "malb") // maximal brightness of the LED panel
   {
     maxLightBrightness = paramValue;
     lightUpdate();
   }
-  else if(paramName == "minLightBrightness") // maximal brightness of the LED panel
+  else if(paramName == "milb") // maximal brightness of the LED panel
   {
     minLightBrightness = paramValue;
     lightUpdate();
   }
-  else if(paramName == "doDilution") // maximal brightness of the LED panel
+  else if(paramName == "ddl") // do dilution for turbidostat mode
   {
+    // provided parameter is length in seconds for the medium pump to run
     doDilution(paramValue);
   }
+  else if(paramName == "mre") // measure reference values for OD calculation
+  {
+    // set flag to read reference values (without OD calculation)
+    readReferenceValues = true;
+    odUpdate();
+    readReferenceValues = false;
+    // send reference values to interface
+    sendReferenceValues();
+  }  
   else
   {
-    Serial.print("unknown:");
+    Serial.print("unknown");
     Serial.println(paramName);
   }
 }

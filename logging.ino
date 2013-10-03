@@ -49,6 +49,21 @@ void loggingEvent()
   Serial.println();
 }
 
+void sendReferenceValues()
+{
+    Serial.print("REF,");
+  for(int i=0; i < numLeds; i++)
+  {
+    Serial.print(od1RefValues[i]);
+    Serial.print(sep);
+  }
+  for(int i=0; i < numLeds; i++)
+  {
+    Serial.print(od2RefValues[i]);
+    Serial.print(sep);
+  }
+  Serial.println();
+}
 
 
 

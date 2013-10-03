@@ -36,20 +36,30 @@ void odUpdate()
   analogWrite(ledPin, lightBrightness);
 }
 
-//take the sample from the two sensors
+// read OD values from the two sensors for a single emitter
 void readOdSensors(int emitterIdx)
 {
+  // read background brightness
   delay(200);
   odValBg  = readSensor(odPin);
   odVal2Bg = readSensor(odPin2);
-
+  // read foreground brightness and calculate OD
   digitalWrite(ledPins[emitterIdx], HIGH);
   delay(200);
-  od1Values[emitterIdx] = readSensor(odPin)  - odValBg;
-  od2Values[emitterIdx] = readSensor(odPin2) - odVal2Bg;
+  if(readReferenceValues)
+  {
+    od1RefValues[emitterIdx] = readSensor(odPin)  - odValBg;
+    od2RefValues[emitterIdx] = readSensor(odPin2) - odVal2Bg;
+  }
+  else
+  {
+    od1Values[emitterIdx] = -log((readSensor(odPin)  - odValBg) / od1RefValues[emitterIdx]);
+    od2Values[emitterIdx] = -log((readSensor(odPin2) - odVal2Bg) / od2RefValues[emitterIdx]);
+  }
   digitalWrite(ledPins[emitterIdx], LOW);
 }
 
+// reads brightness from specified sensor. averages specified number of subsequent readings
 float readSensor(int sensorPin)
 {
   analogRead(sensorPin);  // discard first value from sensor

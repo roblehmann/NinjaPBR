@@ -1,8 +1,7 @@
 void pumpSetup()
 {
+   // setup air pump
   airValve.attach(airValvePin);
-  // setup air pump
-  airPumpState = LOW;
   // setup medium pump
   pinMode(mediumPumpPin, OUTPUT);
   digitalWrite(mediumPumpPin, LOW);

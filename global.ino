@@ -5,6 +5,8 @@ void updateSensorLogValues()
   odUpdate();
   // send to computer
   loggingEvent();
+  // check if turbidostat is active and dilution is necessary
+  turbidityUpdate();
 }
 
 // starts timer to sample sensors and send them to the computer
@@ -25,6 +27,3 @@ void stopSensorReadTimer()
     sensorReadTimerID = timerNotSet;
   }
 }
-
-
-

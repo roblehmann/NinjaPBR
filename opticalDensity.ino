@@ -25,7 +25,7 @@ void odUpdate()
 
   Vcc = readVcc() / thousand;
   analogWrite(ledPin, 0); 
-  delay(thousand); // wait for bubbling to settle
+  delay(400); // wait for bubbling to settle
 
   for(int i=numLeds-1; i >= 0; i--)
     readOdSensors(i);
@@ -40,12 +40,12 @@ void odUpdate()
 void readOdSensors(int emitterIdx)
 {
   // read background brightness
-  delay(200);
+  delay(150);
   odValBg  = readSensor(odPin);
   odVal2Bg = readSensor(odPin2);
   // read foreground brightness and calculate OD
   digitalWrite(ledPins[emitterIdx], HIGH);
-  delay(200);
+  delay(150);
   if(readReferenceValues)
   {
     od1RefValues[emitterIdx] = readSensor(odPin)  - odValBg;

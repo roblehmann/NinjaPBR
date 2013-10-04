@@ -26,7 +26,7 @@ void temperatureSetup()
     dsInLiquid.requestTemperatures();
   }
   // We want to be sure that the conversion has been done
-  delay(delayFourhundred);
+  delay(400);
 }
 
 void temperatureUpdate()

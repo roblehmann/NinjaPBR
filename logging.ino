@@ -23,23 +23,9 @@ void loggingEvent()
   Serial.print(sep);
   Serial.print(temperatureMeasuredInLiquid());
   Serial.print(sep);
-  Serial.print(dayPhase);
-  Serial.print(sep);
   Serial.print(lightBrightness);
   Serial.print(sep);
   Serial.print(BIOREACTOR_MODE);
-  Serial.print(sep);
-  Serial.print(PHASE_DURATIONS[PHASE_MORNING]);
-  Serial.print(sep);
-  Serial.print(PHASE_DURATIONS[PHASE_DAY]);
-  Serial.print(sep);
-  Serial.print(PHASE_DURATIONS[PHASE_EVENING]);
-  Serial.print(sep);
-  Serial.print(PHASE_DURATIONS[PHASE_NIGHT]);
-  Serial.print(sep);
-  Serial.print(lightChangeStep);  
-  Serial.print(sep);
-  Serial.print(lightChangeStepLength);
   Serial.print(sep);
   Serial.print(minLightBrightness);
   Serial.print(sep);
@@ -49,6 +35,7 @@ void loggingEvent()
   Serial.println();
 }
 
+// announce reference values used for OD calculation
 void sendReferenceValues()
 {
     Serial.print("REF,");
@@ -65,10 +52,28 @@ void sendReferenceValues()
   Serial.println();
 }
 
+// announce dynamic light profile values
+void sendLightProfile()
+{
+  Serial.print("LP,");
+  for(int i=0;i<lightProfileLength;i++)
+  {
+    Serial.print(brightnessValue[i]);
+    Serial.print(sep);
+    Serial.print(brightnessDuration[i]);
+    Serial.print(sep);
+  }
+  Serial.println();
+}
 
 
-
-
+// announce current CAPTOR mode
+void sendMode()
+{
+  Serial.print("MD,");
+  Serial.print(BIOREACTOR_MODE);
+  Serial.println(sep);
+}
 
 
 

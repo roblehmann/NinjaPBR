@@ -1,3 +1,6 @@
+#include "Arduino.h"
+void setup();
+void loop();
 // CAPTOR
 // Cyanobacterial Arduino-based PhotobioreacTOR
 //
@@ -10,35 +13,32 @@
 #include <Servo.h>
 
 //----------CONSTANTS-GLOBAL--------- //
-#define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
-#define BIOREACTOR_LIGHT_MODE     1   // light const. at full brightness, od/temp. measured
-#define BIOREACTOR_DARK_MODE      2   // light off, od/temp. measured
-#define BIOREACTOR_DYNAMIC_MODE   3   // light varies according to uploaded dynamic profile, od/temp. measured
-#define BIOREACTOR_ERROR_MODE     4   // something went wrong,switch off everything
+#define BIOREACTOR_STANDBY_MODE   1   // nothing on, nothing measured
+#define BIOREACTOR_LIGHT_MODE     2   // light const. at full brightness, od/temp. measured
+#define BIOREACTOR_DARK_MODE      3   // light off, od/temp. measured
+#define BIOREACTOR_DYNAMIC_MODE 4   // light varies circadian, od/temp. measured
+#define BIOREACTOR_ERROR_MODE     5  // somewthing went wrong,switch off everything
 
-//---------- CONSTANTS-DETEKTOR -----//
-#define  odPin      A0  // OD detector diode
-#define  odPin2     A1  // OD detectpor diode
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
-//----------CONSTANTS- EMITTER --------- //
-#define  redPin     8  //Red-Emitter diode
-#define  greenPin   9  //green-Emitter diode
-#define  bluePin    10  //blue-Emitter diode
-#define  ir740Pin   11  //IR-Emitter diode
-#define  ir850Pin   12  //IR-Emitter diode
 //----------CONSTANTS-GAS--------- //
-#define  airValvePin 5
+#define  airValvePin 6
 //----------CONSTANTS-MEDIUM--------- //
-#define  mediumPumpPin 6
-
+#define  mediumPumpPin 5
+//----------CONSTANTS-OD--------- //
+#define  ir850Pin      12  //IR-Emitter diode
+#define  ir740Pin      8  //IR-Emitter diode
+#define  greenPin   7  //Red-Emitter diode
+#define  bluePin    9  //Red-Emitter diode
+#define  redPin     10  //Red-Emitter diode
+#define  odPin      A0  // OD detector diode
+#define  odPin2     A1  // OD detectpor diode
 
 const int ledPins[] = {
   ir850Pin, ir740Pin, redPin, greenPin, bluePin};
 
-// marks default state of timer
+// space saver defines
 #define timerNotSet -1
-// used often as delay and for conversion
 #define thousand 1000L
 
 //----------CONSTANTS-TEMPERATURE--------- //
@@ -57,22 +57,12 @@ byte minLightBrightness = 0;
 byte maxLightBrightness = 255;
 
 byte lightBrightness = 0;       // holds brightness of LED panel in range 0-255 (0=off)
-
 // Light profile //
-const int      lightProfileLength = 200;
-byte           brightnessValue[lightProfileLength];
-unsigned long  brightnessDuration[lightProfileLength];
-int            lightProfileIdx; // indicates the current position in the light profile 
-
-// Turbidostat Mode //
-// if active, captor checks of optical density exceeds "upperOdThr". if so, a
-// series of dilution steps of length dilutionDuration are issued, until the OD
-// is found below "lowerOdThr"
-boolean  inTurbidostat    = false;   // is turbidostat mode is active
-boolean  inDilution       = false;   // is turbidostat mode is active
-int      dilutionDuration = 1;       // how long the medium pump should run to dilute one step (sec)
-float    upperOdThr       = 1;       // when to start diluting
-float    lowerOdThr       = .8;      // when to stop diluting
+const int lightProfileLength = 200;
+byte brightnessValue[lightProfileLength];
+unsigned long brightnessDuration[lightProfileLength];
+// indicates the current position in the light profile 
+int lightProfileIdx;
 
 // OD MEASUREMENTS //
 // foreground od measurements
@@ -171,7 +161,7 @@ void checkChangedReactorMode ()
         startAirPump() ;
         // ------------ Adding timed actions ----------
         startSensorReadTimer();
-        startDynamicLightTimers();
+        startCircadianLightTimers();
         break;
       }
     case BIOREACTOR_LIGHT_MODE:
@@ -196,13 +186,14 @@ void checkChangedReactorMode ()
         break;
       }
     default:
+      Serial.println("unknown Mode");
       BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
       stopAirPump() ;
       lightOff();
       stopSensorReadTimer();
       break;
     }
-    sendMode();
+    loggingEvent();
   }
 }
 
@@ -233,9 +224,9 @@ void checkSerialMessage() {
   }
 }
 
-char   charBuf[30];
+char charBuf[30];
 String paramName;
-float  paramValue;
+unsigned long paramValue;
 
 /* method takes message from controlling computer and parses it, assigning the 
  command value to the corresponding variable. 
@@ -246,22 +237,36 @@ void digestMessage()
 {
   inputString.toCharArray(charBuf, 30); 
   paramName = strtok(charBuf,sep);
-  paramValue = atof(strtok(NULL,sep));
+  paramValue = atol(strtok(NULL,sep));
   Serial.println(paramName);
   Serial.println(paramValue);
 
   if(paramName == "md") // which reactor program to use
   {
-    BIOREACTOR_MODE = paramValue;
+    switch(paramValue)
+    {
+    case 1:
+      BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+      break;
+    case 2:
+      BIOREACTOR_MODE = BIOREACTOR_LIGHT_MODE;
+      break;
+    case 3:
+      BIOREACTOR_MODE = BIOREACTOR_DARK_MODE;
+      break;
+    case 4:
+      BIOREACTOR_MODE = BIOREACTOR_DYNAMIC_MODE;
+      break;
+    case 5:
+      BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
+      break;
+    }
   }
   else if(paramName == "sst") // how often to sample
   {
     sensorSamplingTime = paramValue;
-    if(sensorReadTimerID != timerNotSet) // if sampling is currently active, make new frequency active
-    {
-      stopSensorReadTimer(); // restart sampling timer
-      startSensorReadTimer(); // standby mode and reinit reactor mode
-    }
+    stopSensorReadTimer(); // restart sampling timer
+    startSensorReadTimer(); // standby mode and reinit reactor mode
   }
   else if(paramName == "malb") // maximal brightness of the LED panel
   {
@@ -272,6 +277,11 @@ void digestMessage()
   {
     minLightBrightness = paramValue;
     lightUpdate();
+  }
+  else if(paramName == "ddl") // do dilution for turbidostat mode
+  {
+    // provided parameter is length in seconds for the medium pump to run
+    doDilution(paramValue);
   }
   else if(paramName == "mre") // measure reference values for OD calculation
   {
@@ -287,28 +297,11 @@ void digestMessage()
     if(paramValue >= 0 & paramValue < lightProfileLength)
     {
       // first value is the index, second is the brightness (0-255), third is the duration in seconds
-      brightnessValue[int(paramValue)] = atoi(strtok(NULL,sep));
-      brightnessDuration[int(paramValue)] = atol(strtok(NULL,sep));
-    } 
-    else {
-      Serial.println("invalid idx");
+      brightnessValue[paramValue] = atoi(strtok(NULL,sep));
+      brightnessDuration[paramValue] = atoi(strtok(NULL,sep));
+    } else {
+        Serial.println("invalid idx");
     }
-  }  
-  else if(paramName == "it") // set turbidostat mode. if paramValue==1, activate, otherwise deactivate
-  {
-    inTurbidostat = (paramValue==1);
-  }
-  else if(paramName == "dd") // set length of dilution (how long the medium pump runs in seconds)
-  {
-    dilutionDuration = paramValue;
-  }
-  else if(paramName == "uot") // OD when to start dilution
-  {
-    upperOdThr = paramValue;
-  }
-  else if(paramName == "lot") // OD when to stop dilution
-  {
-    lowerOdThr = paramValue;
   }
   else if(paramName == "sbp") // receive brightness profile values
   {
@@ -320,8 +313,6 @@ void digestMessage()
     Serial.println(paramName);
   }
 }
-
-
 
 
 

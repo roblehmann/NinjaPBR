@@ -78,7 +78,6 @@ float    lowerOdThr       = .8;      // when to stop diluting
 // foreground od measurements
 #define numLeds 5
 #define numReadingsAverage 8.0
-#define valDiv 1023.0
 // ir850, ir740, red, green, blue
 float od1Values[5];
 float od2Values[5];

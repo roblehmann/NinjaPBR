@@ -65,7 +65,7 @@ float readSensor(int sensorPin)
   analogRead(sensorPin);  // discard first value from sensor
   sample = .0;
   for(int i=0; i<numReadingsAverage; i++)
-    sample = sample + (analogRead(sensorPin) / valDiv * Vcc);
+    sample = sample + (analogRead(sensorPin) / 1023.0 * Vcc);
   return(sample / numReadingsAverage);
 }
 

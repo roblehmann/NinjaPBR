@@ -1,7 +1,9 @@
 void pumpSetup()
 {
    // setup air pump
-  airValve.attach(airValvePin);
+  //  airValve.attach(airValvePin);
+  pinMode(airValvePin, OUTPUT);
+  digitalWrite(airValvePin, LOW);
   // setup medium pump
   pinMode(mediumPumpPin, OUTPUT);
   digitalWrite(mediumPumpPin, LOW);
@@ -13,7 +15,8 @@ void startAirPump()
   // air by pump on/off control
   airPumpState = HIGH;
   // air by pinch valv control
-  airValve.write(airValveOpenAngle);
+//  airValve.write(airValveOpenAngle);
+  digitalWrite(airValvePin, airPumpState);
 }
 
 void stopAirPump() 
@@ -21,7 +24,8 @@ void stopAirPump()
   // air by pump on/off control
   airPumpState = LOW;
   // air by pinch valv control
-  airValve.write(airValveClosedAngle);
+  //  airValve.write(airValveClosedAngle);
+  digitalWrite(airValvePin, airPumpState);
 }
 
 //---------   medium supply part for turbidostat ---------//

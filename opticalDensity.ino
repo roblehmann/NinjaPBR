@@ -22,11 +22,12 @@ void odUpdate()
   // remember if pump was active before OD measurement, then deactivate
   boolean orig_pump_state = airPumpState; 
   stopAirPump();
-
-  Vcc = readVcc() / thousand;
+  // turn of light if active
   analogWrite(ledPin, 0); 
   delay(400); // wait for bubbling to settle
-
+  // read current Vcc level for calculation
+  Vcc = readVcc() / thousand;
+  
   for(int i=numLeds-1; i >= 0; i--)
     readOdSensors(i);
 
@@ -40,7 +41,6 @@ void odUpdate()
 void readOdSensors(int emitterIdx)
 {
   // read background brightness
-  delay(150);
   odValBg  = readSensor(odPin);
   odVal2Bg = readSensor(odPin2);
   // read foreground brightness and calculate OD
@@ -48,13 +48,13 @@ void readOdSensors(int emitterIdx)
   delay(150);
   if(readReferenceValues)
   {
-    od1RefValues[emitterIdx] = readSensor(odPin)  - odValBg;
-    od2RefValues[emitterIdx] = readSensor(odPin2) - odVal2Bg;
+    od1RefValues[emitterIdx] = abs(readSensor(odPin)  - odValBg);
+    od2RefValues[emitterIdx] = abs(readSensor(odPin2) - odVal2Bg);
   }
   else
   {
-    od1Values[emitterIdx] = -log((readSensor(odPin)  - odValBg) / od1RefValues[emitterIdx]);
-    od2Values[emitterIdx] = -log((readSensor(odPin2) - odVal2Bg) / od2RefValues[emitterIdx]);
+    od1Values[emitterIdx] = -log(abs(readSensor(odPin)  - odValBg) / od1RefValues[emitterIdx]);
+    od2Values[emitterIdx] = -log(abs(readSensor(odPin2) - odVal2Bg) / od2RefValues[emitterIdx]);
   }
   digitalWrite(ledPins[emitterIdx], LOW);
 }
@@ -68,22 +68,6 @@ float readSensor(int sensorPin)
     sample = sample + (analogRead(sensorPin) / valDiv * Vcc);
   return(sample / numReadingsAverage);
 }
-
-// taken from
-// http://hacking.majenko.co.uk/making-accurate-adc-readings-on-arduino
-long readVcc_uno() {
-  long result;
-  // Read 1.1V reference against AVcc
-  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-  delay(2); // Wait for Vref to settle
-  ADCSRA |= _BV(ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  result = ADCL;
-  result |= ADCH<<8;
-  result = 1125300L / result; // Back-calculate AVcc in mV
-  return result;
-}
-
 
 // taken from https://code.google.com/p/tinkerit/wiki/SecretVoltmeter
 //

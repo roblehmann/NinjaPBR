@@ -24,10 +24,10 @@ void odUpdate()
   stopAirPump();
   // turn of light if active
   analogWrite(ledPin, 0); 
-  delay(400); // wait for bubbling to settle
+  delay(300); // wait for bubbling to settle
   // read current Vcc level for calculation
   Vcc = readVcc() / thousand;
-  
+
   for(int i=numLeds-1; i >= 0; i--)
     readOdSensors(i);
 
@@ -41,21 +41,32 @@ void odUpdate()
 void readOdSensors(int emitterIdx)
 {
   // read background brightness
-  odValBg  = readSensor(odPin);
-  odVal2Bg = readSensor(odPin2);
+  delay(140);
+  for(int i=0; i<numChambers; i++)
+  {
+    odValBg[i]  = readSensor(odPin[i]);
+    odVal2Bg[i] = readSensor(odPin2[i]);
+  }
   // read foreground brightness and calculate OD
   digitalWrite(ledPins[emitterIdx], HIGH);
-  delay(150);
+  delay(140);
   if(readReferenceValues)
   {
-    od1RefValues[emitterIdx] = abs(readSensor(odPin)  - odValBg);
-    od2RefValues[emitterIdx] = abs(readSensor(odPin2) - odVal2Bg);
+    for(int i=0; i<numChambers; i++)
+    {
+      od1RefValues[i][emitterIdx] = abs(readSensor(odPin[i])  - odValBg[i]);
+      od2RefValues[i][emitterIdx] = abs(readSensor(odPin2[i]) - odVal2Bg[i]);
+    }
   }
   else
   {
-    od1Values[emitterIdx] = -log(abs(readSensor(odPin)  - odValBg) / od1RefValues[emitterIdx]);
-    od2Values[emitterIdx] = -log(abs(readSensor(odPin2) - odVal2Bg) / od2RefValues[emitterIdx]);
+    for(int i=0; i<numChambers; i++)
+    {
+      od1Values[i][emitterIdx] = -log(abs(readSensor(odPin[i])  - odValBg[i]) / od1RefValues[i][emitterIdx]);
+      od2Values[i][emitterIdx] = -log(abs(readSensor(odPin2[i]) - odVal2Bg[i]) / od2RefValues[i][emitterIdx]);
+    }
   }
+  // switch off emitter again
   digitalWrite(ledPins[emitterIdx], LOW);
 }
 
@@ -98,3 +109,5 @@ long readVcc() {
   result = scaleConst / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return (long)result; // Vcc in millivolts
 }
+
+

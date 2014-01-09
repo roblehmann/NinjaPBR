@@ -1,26 +1,41 @@
 void loggingSetup()
 {
-// nothing to do for me here...
+  // nothing to do for me here...
 }
 
 void loggingEvent()
 {
-  // send to computer
-  Serial.print("DATA,");
-  for(int i=0; i < numLeds; i++)
+  // send message type
+  Serial.print("DATA;");
+  
+  // send intensity values
+  for(int j=0; j<numChambers; j++)
   {
-    Serial.print(od1Values[i]);
-    Serial.print(sep);
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od1Values[j][i]);
+      Serial.print(sep);
+    }
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od2Values[j][i]);
+      if(!((j == numChambers-1) && (i == numLeds-1))) 
+        Serial.print(sep);
+    }
   }
-  for(int i=0; i < numLeds; i++)
+  Serial.print(';');
+  
+  // send background intensity values 
+  for(int j=0; j<numChambers; j++)
   {
-    Serial.print(od2Values[i]);
+    Serial.print(odValBg[j]);
     Serial.print(sep);
+    Serial.print(odVal2Bg[j]);
+    if(j<numChambers-1) Serial.print(sep);
   }
-  Serial.print(odValBg);
-  Serial.print(sep);
-  Serial.print(odVal2Bg);
-  Serial.print(sep);
+  Serial.print(';');
+  
+  //  send other parameters
   Serial.print(temperatureMeasuredInLiquid());
   Serial.print(sep);
   Serial.print(lightBrightness);
@@ -38,16 +53,19 @@ void loggingEvent()
 // announce reference values used for OD calculation
 void sendReferenceValues()
 {
-    Serial.print("REF,");
-  for(int i=0; i < numLeds; i++)
+  Serial.print("REF;");
+  for(int j=0; j<numChambers; j++)
   {
-    Serial.print(od1RefValues[i]);
-    Serial.print(sep);
-  }
-  for(int i=0; i < numLeds; i++)
-  {
-    Serial.print(od2RefValues[i]);
-    Serial.print(sep);
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od1RefValues[j][i]);
+      Serial.print(sep);
+    }
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od2RefValues[j][i]);
+      Serial.print(sep);
+    }
   }
   Serial.println();
 }
@@ -55,7 +73,7 @@ void sendReferenceValues()
 // announce dynamic light profile values
 void sendLightProfile()
 {
-  Serial.print("LP,");
+  Serial.print("LP;");
   for(int i=0;i<lightProfileLength;i++)
   {
     Serial.print(brightnessValue[i]);
@@ -70,10 +88,13 @@ void sendLightProfile()
 // announce current CAPTOR mode
 void sendMode()
 {
-  Serial.print("MD,");
+  Serial.print("MD;");
   Serial.print(BIOREACTOR_MODE);
   Serial.println(sep);
 }
+
+
+
 
 
 

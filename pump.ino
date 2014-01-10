@@ -16,7 +16,7 @@ void startAirPump()
   airPumpState = HIGH;
   // air by pinch valv control
 //  airValve.write(airValveOpenAngle);
-  digitalWrite(airValvePin, airPumpState);
+  digitalWrite(airValvePin, LOW);
 }
 
 void stopAirPump() 
@@ -25,7 +25,7 @@ void stopAirPump()
   airPumpState = LOW;
   // air by pinch valv control
   //  airValve.write(airValveClosedAngle);
-  digitalWrite(airValvePin, airPumpState);
+  digitalWrite(airValvePin, HIGH);
 }
 
 //---------   medium supply part for turbidostat ---------//

@@ -7,7 +7,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
-#include <Servo.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -99,9 +98,6 @@ boolean readReferenceValues = false;
 
 // AIR PUMP REGULATION //
 boolean airPumpState;
-Servo airValve;
-#define airValveOpenAngle 8
-#define airValveClosedAngle 64
 
 // how often to measure od/temp
 unsigned long sensorSamplingTime = 10L; //seconds

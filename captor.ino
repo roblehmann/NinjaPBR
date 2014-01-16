@@ -84,10 +84,8 @@ float od2Values[5];
 
 //reference values for OD calculation
 // ir850, ir740, red, green, blue
-float od1RefValues[5] = {
-  5,5,5,5,5};
-float od2RefValues[5] = {
-  5,5,5,5,5};
+float od1RefValues[5] = {5,5,5,5,5};
+float od2RefValues[5] = {5,5,5,5,5};
 
 // background od measurements
 float odValBg = 0.0;

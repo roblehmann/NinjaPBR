@@ -41,7 +41,7 @@ void odUpdate()
 void readOdSensors(int emitterIdx)
 {
   // read background brightness
-  delay(140);
+  delay(sensorReadDelay);
   for(int i=0; i<numChambers; i++)
   {
     odValBg[i]  = readSensor(odPin[i]);
@@ -49,7 +49,7 @@ void readOdSensors(int emitterIdx)
   }
   // read foreground brightness and calculate OD
   digitalWrite(ledPins[emitterIdx], HIGH);
-  delay(140);
+  delay(sensorReadDelay);
   if(readReferenceValues)
   {
     for(int i=0; i<numChambers; i++)

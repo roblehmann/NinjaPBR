@@ -80,8 +80,12 @@ float    upperOdThr       = 1;       // when to start diluting
 float    lowerOdThr       = .8;      // when to stop diluting
 
 // OD MEASUREMENTS //
+// delay between switching on emitter and reading out sensor, allow sensor value to change
+#define sensorReadDelay 140
+
 // number of OD measurements to average for resulting OD
 #define numReadingsAverage 8.0
+
 // array storing the resulting OD values for logging
 float od1Values[numChambers][numLeds] = {0};
 float od2Values[numChambers][numLeds] = {0};

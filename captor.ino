@@ -31,7 +31,7 @@ const int  odPin2[]  = {A1,A3};  // OD detectpor diode type 2
 #define numLeds 5     // number of emitters with different wavelength
 // number of culture chambers with individual OD sensors
 // needs to match the number of OD sensor pins per type
-#define numChambers 1
+#define numChambers 2
 const int ledPins[] = {
   ir850Pin, ir740Pin, redPin, greenPin, bluePin};
 
@@ -81,7 +81,9 @@ float    lowerOdThr       = .8;      // when to stop diluting
 
 // OD MEASUREMENTS //
 // number of OD measurements to average for resulting OD
-#define numReadingsAverage 8.0
+#define numReadingsAverage 10.0
+// time to wait between switching on the emitter led and reading the sensor
+int sensorReadDelay = 25;
 // array storing the resulting OD values for logging
 float od1Values[numChambers][numLeds] = {0};
 float od2Values[numChambers][numLeds] = {0};
@@ -160,8 +162,7 @@ void checkChangedReactorMode ()
     case BIOREACTOR_STANDBY_MODE: 
       { 
         // to go into standby, need to switch off light, remove timers for day phase/light change
-        // deactivate air pump 
-        stopAirPump();
+        startAirPump();
         // switch off light, remove timers
         stopSensorReadTimer();
         lightOff();
@@ -199,7 +200,7 @@ void checkChangedReactorMode ()
       }
     default:
       BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
-      stopAirPump() ;
+      startAirPump() ;
       lightOff();
       stopSensorReadTimer();
       break;

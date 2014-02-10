@@ -24,7 +24,7 @@ void odUpdate()
   stopAirPump();
   // turn of light if active
   analogWrite(ledPin, 0); 
-  delay(300); // wait for bubbling to settle
+  delay(100); // wait for bubbling to settle
   // read current Vcc level for calculation
   Vcc = readVcc() / thousand;
 

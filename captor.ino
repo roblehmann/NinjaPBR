@@ -7,7 +7,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
-//#include <Servo.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -17,8 +16,7 @@
 #define BIOREACTOR_ERROR_MODE     4   // something went wrong,switch off everything
 
 //---------- CONSTANTS-DETEKTORS -----//
-const int  odPin[]  = {A0,A2};  // OD detector diode type 1
-const int  odPin2[]  = {A1,A3};  // OD detectpor diode type 2
+const int  odPin[]  = {A0,A1};  // OD detector diode type 1
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS- EMITTER --------- //
@@ -31,7 +29,7 @@ const int  odPin2[]  = {A1,A3};  // OD detectpor diode type 2
 #define numLeds 5     // number of emitters with different wavelength
 // number of culture chambers with individual OD sensors
 // needs to match the number of OD sensor pins per type
-#define numChambers 2
+#define numChambers 1
 const int ledPins[] = {
   ir850Pin, ir740Pin, redPin, greenPin, bluePin};
 
@@ -81,21 +79,16 @@ float    lowerOdThr       = .8;      // when to stop diluting
 
 // OD MEASUREMENTS //
 // number of OD measurements to average for resulting OD
-#define numReadingsAverage 10.0
+#define numReadingsAverage 100.0
 // time to wait between switching on the emitter led and reading the sensor
 int sensorReadDelay = 40;
 // array storing the resulting OD values for logging
-float od1Values[numChambers][numLeds] = {0};
-float od2Values[numChambers][numLeds] = {0};
+// column 5 stores background values, column 0-4 the background-corrected OD values
+float odValues[numChambers][ numLeds + 1 ] = {0};
 
 //reference values for OD calculation
-// ir850, ir740, red, green, blue
-float od1RefValues[numChambers][numLeds] = {5};
-float od2RefValues[numChambers][numLeds] = {5};
-
-// background od measurements
-float odValBg[numChambers] = {0};
-float odVal2Bg[numChambers] = {0};
+// column 5 stores background values, column 0-4 the background-corrected reference intensity values
+float refValues[numChambers][ numLeds + 1 ] = {5};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;
@@ -107,7 +100,7 @@ boolean airPumpState;
 //#define airValveClosedAngle 64
 
 // how often to measure od/temp
-unsigned long sensorSamplingTime = 2L; //seconds
+unsigned long sensorSamplingTime = 5L; //seconds
 
 // store timer IDs, to be able to remove them when the BIOREACTOR_MODE or the sample timer change
 int lightChangeTimerID = -1;
@@ -281,9 +274,6 @@ void digestMessage()
     // set flag to read reference values (without OD calculation)
     readReferenceValues = true;
     odUpdate();
-    readReferenceValues = false;
-    // send reference values to interface
-    sendReferenceValues();
   }
   else if(paramName == "bp") // receive brightness profile values
   {

@@ -13,12 +13,7 @@ void loggingEvent()
   {
     for(int i=0; i < numLeds; i++)
     {
-      Serial.print(od1Values[j][i]);
-      Serial.print(sep);
-    }
-    for(int i=0; i < numLeds; i++)
-    {
-      Serial.print(od2Values[j][i]);
+      Serial.print(odValues[j][i]);
       if(!((j == numChambers-1) && (i == numLeds-1))) 
         Serial.print(sep);
     }
@@ -28,9 +23,7 @@ void loggingEvent()
   // send background intensity values 
   for(int j=0; j<numChambers; j++)
   {
-    Serial.print(odValBg[j]);
-    Serial.print(sep);
-    Serial.print(odVal2Bg[j]);
+    Serial.print(odValues[j][5]);
     if(j<numChambers-1) Serial.print(sep);
   }
   Serial.print(';');
@@ -58,12 +51,7 @@ void sendReferenceValues()
   {
     for(int i=0; i < numLeds; i++)
     {
-      Serial.print(od1RefValues[j][i]);
-      Serial.print(sep);
-    }
-    for(int i=0; i < numLeds; i++)
-    {
-      Serial.print(od2RefValues[j][i]);
+      Serial.print(refValues[j][i]);
       Serial.print(sep);
     }
   }

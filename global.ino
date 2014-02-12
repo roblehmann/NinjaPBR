@@ -2,11 +2,7 @@ void updateSensorLogValues()
 {
   // update sensor data
   temperatureUpdate();
-  odUpdate();
-  // send to computer
-  loggingEvent();
-  // check if turbidostat is active and dilution is necessary
-  turbidityUpdate();
+  odUpdateStart();
 }
 
 // starts timer to sample sensors and send them to the computer

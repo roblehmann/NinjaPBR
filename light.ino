@@ -16,7 +16,7 @@ void lightUpdate()
       lightProfileIdx += 1;
       // start from beginning if necessary
       // to allow for shorter light profiles than the full lightProfileLength, also return to first value if duration 0 is found
-      if(lightProfileIdx >= lightProfileLength | brightnessDuration[lightProfileIdx] == 0)
+      if( (lightProfileIdx >= lightProfileLength) | (brightnessDuration[lightProfileIdx] == 0) )
         lightProfileIdx = 0;
       // set panel brightness
       lightBrightness = brightnessValue[lightProfileIdx];

@@ -1,3 +1,5 @@
+int nPositions = 6;
+
 void loggingSetup()
 {
   // nothing to do for me here...
@@ -13,7 +15,7 @@ void loggingEvent()
   {
     for(int i=0; i < numLeds; i++)
     {
-      Serial.print(odValues[j][i]);
+      Serial.print(odValues[j][i],nPositions);
       if(!((j == numChambers-1) && (i == numLeds-1))) 
         Serial.print(sep);
     }
@@ -23,7 +25,7 @@ void loggingEvent()
   // send background intensity values 
   for(int j=0; j<numChambers; j++)
   {
-    Serial.print(odValues[j][5]);
+    Serial.print(odValues[j][5],nPositions);
     if(j<numChambers-1) Serial.print(sep);
   }
   Serial.print(';');

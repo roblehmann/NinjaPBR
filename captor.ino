@@ -7,6 +7,11 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
+
+#define DEBUG FALSE
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -81,7 +86,7 @@ float    lowerOdThr       = .8;      // when to stop diluting
 // number of OD measurements to average for resulting OD
 #define numReadingsAverage 100.0
 // time to wait between switching on the emitter led and reading the sensor
-int sensorReadDelay = 40;
+int sensorConversionTime = 102;
 // array storing the resulting OD values for logging
 // column 5 stores background values, column 0-4 the background-corrected OD values
 float odValues[numChambers][ numLeds + 1 ] = {0};
@@ -277,7 +282,7 @@ void digestMessage()
   }
   else if(paramName == "bp") // receive brightness profile values
   {
-    if(paramValue >= 0 & paramValue < lightProfileLength)
+    if( (paramValue >= 0) & (paramValue < lightProfileLength) )
     {
       // first value is the index, second is the brightness (0-255), third is the duration in seconds
       brightnessValue[int(paramValue)] = atoi(strtok(NULL,sep));

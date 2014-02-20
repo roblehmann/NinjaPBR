@@ -186,8 +186,10 @@ void fetchTSLsensorData()
 void storeTSLdata(int iChamber, uint16_t bb, uint16_t ir)
 {
   uint16_t val;
-  if(nLambda <=1) val = bb;
-  else val = bb - ir;
+  // TODO: test effect of IR subtraction on the resulting value (does IR yield usable correction term for high-pass filter)
+  // if(nLambda <=1) val = bb;
+  // else val = bb - ir;
+  val = bb;
     // need to check if background / reference value / OD is measured and do according calculation
   if(readReferenceValues)
   {

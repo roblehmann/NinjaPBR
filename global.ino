@@ -20,7 +20,7 @@ void startSensorReadTimer()
 {
   if(sensorReadTimerID == timerNotSet) 
   {
-    sensorReadTimerID = t.every(sensorSamplingTime * thousand,updateSensorLogValues);
+    sensorReadTimerID = t.every(sensorSamplingTime * 1000L,updateSensorLogValues);
   } 
 }
 
@@ -44,7 +44,7 @@ void odUpdateStart()
   ancient_pump_state = airPumpState; // remember if pump was active before OD measurement
   stopAirPump(); //then deactivate
   analogWrite(ledPin, 0); // turn off light if active
-  delay(100); // wait for bubbling to settle
+  delay(50); // wait for bubbling to settle
   // start series of update steps for background intensity and individual wavelengths
   odUpdate();
 }

@@ -33,7 +33,7 @@ void stopAirPump()
 void doDilution(int duration)
 {
   startMediumPump();
-  t.after(duration * thousand, stopMediumPump);
+  t.after(duration * 1000L, stopMediumPump);
 }
 // starts dilution 
 void startMediumPump()

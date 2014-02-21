@@ -27,7 +27,7 @@ void odSetup()
   
   //------------------------------------------
   //  setup detectors
-  tsl1 = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT,1);
+  tsl1 = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW,1);
   setupSensor(tsl1);
   if(numChambers > 1)
   {
@@ -36,7 +36,7 @@ void odSetup()
   }
   if(numChambers > 2) 
   {
-    tsl3 = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW, 3);
+    tsl3 = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT,3);
     setupSensor(tsl3);
   }
  }
@@ -121,7 +121,6 @@ void odUpdate()
 // function tells TSL sensors in all chambers to start measuring
 void startTSLsensors()
 {
-  if(DEBUG) Serial.println("Starting TSLs");
   tsl1.enable();
   if(numChambers > 1) tsl2.enable();
   if(numChambers > 2) tsl3.enable();
@@ -131,7 +130,6 @@ void startTSLsensors()
 // function tells TSL sensors in all chambers to stop measuring
 void stopTSLsensors()
 {
-  if(DEBUG) Serial.println("Stopping TSLs");
   tsl1.disable();
   if(numChambers > 1) tsl2.disable();
   if(numChambers > 2) tsl3.disable();
@@ -142,7 +140,6 @@ void stopTSLsensors()
 // function causes delay to allow TSL to measure, according to the employed integration time
 void waitForTSLconversion()
 {
-    if(DEBUG) Serial.println("Waiting for TSLs");
     switch (integrationTime) {
     case 0:
       /*13ms: fast but low resolution */
@@ -160,10 +157,9 @@ void waitForTSLconversion()
 //-------------------------------------------------//
 //-------------------------------------------------//
 // function fetches measurement results from TSL sensors in all chambers
+uint16_t bb, ir;
 void fetchTSLsensorData()
 {
-  if(DEBUG) Serial.println("Fetching TSLs data");
-  uint16_t bb, ir; 
   //  chamber 1
   tsl1.fetchData(&bb, &ir);
   storeTSLdata(0, bb, ir);
@@ -185,25 +181,21 @@ void fetchTSLsensorData()
 // function manages storage of intensity values
 void storeTSLdata(int iChamber, uint16_t bb, uint16_t ir)
 {
-  uint16_t val;
   // TODO: test effect of IR subtraction on the resulting value (does IR yield usable correction term for high-pass filter)
-  // if(nLambda <=1) val = bb;
-  // else val = bb - ir;
-  val = bb;
     // need to check if background / reference value / OD is measured and do according calculation
   if(readReferenceValues)
   {
     if(nLambda == -1) // ref background values, no need to bg subtraction
-      refValues[iChamber][5]  = val;
+      refValues[iChamber][5]  = bb;
     else // store reference intensity, not OD
-      refValues[iChamber][nLambda] = abs(val  - refValues[iChamber][5]); 
+      refValues[iChamber][nLambda] = abs(bb  - refValues[iChamber][5]); 
   }
   else
   {
     if(nLambda == -1) // background values, no need to bg subtraction
-      odValues[iChamber][5]  = val;
+      odValues[iChamber][5]  = bb;
     else // normal OD values
-      odValues[iChamber][nLambda] = -log(abs(val  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
+      odValues[iChamber][nLambda] = -log(abs(bb  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
   }
 }
 

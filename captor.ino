@@ -9,9 +9,7 @@
 #include <Timer.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_TSL2561_U.h>
-
-#define DEBUG FALSE
+#include <Adafruit_TSL2561_U_mod.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -46,8 +44,6 @@ const int ledPins[] = {
 
 // marks default state of timer
 #define timerNotSet -1
-// used often as delay and for conversion
-#define thousand 1000L
 
 //----------CONSTANTS-TEMPERATURE--------- //
 #define PIN_TEMPERATURE_SENSOR_IN_LIQUID  2   // temperature on culure bottle
@@ -83,17 +79,13 @@ float    upperOdThr       = 1;       // when to start diluting
 float    lowerOdThr       = .8;      // when to stop diluting
 
 // OD MEASUREMENTS //
-// number of OD measurements to average for resulting OD
-#define numReadingsAverage 100.0
-// time to wait between switching on the emitter led and reading the sensor
-int sensorConversionTime = 102;
 // array storing the resulting OD values for logging
 // column 5 stores background values, column 0-4 the background-corrected OD values
-float odValues[numChambers][ numLeds + 1 ] = {0};
+float odValues[numChambers][ (numLeds + 1) ] = {0};
 
 //reference values for OD calculation
 // column 5 stores background values, column 0-4 the background-corrected reference intensity values
-float refValues[numChambers][ numLeds + 1 ] = {5};
+float refValues[numChambers][ (numLeds + 1) ] = {5};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;

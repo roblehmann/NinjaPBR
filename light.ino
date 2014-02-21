@@ -22,7 +22,7 @@ void lightUpdate()
       lightBrightness = brightnessValue[lightProfileIdx];
       analogWrite(ledPin, lightBrightness);
       // update light brightness after appropriate time
-      lightChangeTimerID = t.after(long(brightnessDuration[lightProfileIdx]) * thousand, lightUpdate); 
+      lightChangeTimerID = t.after(long(brightnessDuration[lightProfileIdx]) * 1000L, lightUpdate); 
       break;
     }
   case BIOREACTOR_LIGHT_MODE:

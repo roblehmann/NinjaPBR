@@ -8,8 +8,7 @@
 #include <DallasTemperature.h>
 #include <Timer.h>
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_TSL2561_U_mod.h>
+#include <TSL2561_mod.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -18,8 +17,6 @@
 #define BIOREACTOR_DYNAMIC_MODE   3   // light varies according to uploaded dynamic profile, od/temp. measured
 #define BIOREACTOR_ERROR_MODE     4   // something went wrong,switch off everything
 
-//---------- CONSTANTS-DETEKTORS -----//
-const int  odPin[]  = {A0,A1};  // OD detector diode type 1
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS- EMITTER --------- //
@@ -32,7 +29,7 @@ const int  odPin[]  = {A0,A1};  // OD detector diode type 1
 #define numLeds 5     // number of emitters with different wavelength
 // number of culture chambers with individual OD sensors
 // needs to match the number of OD sensor pins per type
-#define numChambers 1
+#define numChambers 2
 const int ledPins[] = {
   ir850Pin, ir740Pin, redPin, greenPin, bluePin};
 
@@ -86,6 +83,9 @@ float odValues[numChambers][ (numLeds + 1) ] = {0};
 //reference values for OD calculation
 // column 5 stores background values, column 0-4 the background-corrected reference intensity values
 float refValues[numChambers][ (numLeds + 1) ] = {5};
+
+// emitter-specific brightness value
+float emitterBrightness[ numLeds ] = {255,210,220,120,255};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;

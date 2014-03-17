@@ -1,9 +1,14 @@
 // timer id for next wavelengths measurement (need to wait until each measurement is finished, and start afterwards)
 int nextWavelengthReadTimerID = -1;
 
-Adafruit_TSL2561_Unified tsl1 = NULL;
-Adafruit_TSL2561_Unified tsl2 = NULL;
-Adafruit_TSL2561_Unified tsl3 = NULL;
+//Adafruit_TSL2561_Unified tsl1 = NULL;
+//Adafruit_TSL2561_Unified tsl2 = NULL;
+//Adafruit_TSL2561_Unified tsl3 = NULL;
+TSL2561 tsl1 = NULL; 
+TSL2561 tsl2 = NULL; 
+TSL2561 tsl3 = NULL; 
+
+
 // setup for gain 0:1x, 1:16x, 2: autogain
 int gain = 0;
 // setup for sensor integration period 0:13ms, 1:101ms, 2:402ms
@@ -15,28 +20,36 @@ void odSetup()
 {
   //  setup emitters
   pinMode(ir850Pin, OUTPUT);
-  digitalWrite(ir850Pin, LOW);    
+//  digitalWrite(ir850Pin, LOW);    
+  analogWrite(ir850Pin, 0);
   pinMode(ir740Pin, OUTPUT);
-  digitalWrite(ir740Pin, LOW);
+//  digitalWrite(ir740Pin, LOW);
+  analogWrite(ir740Pin, 0);
   pinMode(redPin, OUTPUT);
-  digitalWrite(redPin, LOW);    
+//  digitalWrite(redPin, LOW);    
+  analogWrite(redPin, 0);
   pinMode(greenPin, OUTPUT);
-  digitalWrite(greenPin, LOW);    
+//  digitalWrite(greenPin, LOW);    
+  analogWrite(greenPin, 0);
   pinMode(bluePin, OUTPUT);
-  digitalWrite(bluePin, LOW);    
+//  digitalWrite(bluePin, LOW);    
+  analogWrite(bluePin, 0);
   
   //------------------------------------------
   //  setup detectors
-  tsl1 = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW,1);
+//  tsl1 = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW,1);
+  tsl1 = TSL2561(TSL2561_ADDR_LOW);
   setupSensor(tsl1);
   if(numChambers > 1)
   {
-    tsl2 = Adafruit_TSL2561_Unified(TSL2561_ADDR_HIGH, 2);
+//    tsl2 = Adafruit_TSL2561_Unified(TSL2561_ADDR_HIGH, 2);
+    tsl2 = TSL2561(TSL2561_ADDR_HIGH);
     setupSensor(tsl2);
   }
   if(numChambers > 2) 
   {
-    tsl3 = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT,3);
+//    tsl3 = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT,3);
+    tsl3 = TSL2561(TSL2561_ADDR_FLOAT);
     setupSensor(tsl3);
   }
  }
@@ -44,30 +57,27 @@ void odSetup()
 //-------------------------------------------------//
 //-------------------------------------------------//
 // configure the sensors
-void setupSensor(Adafruit_TSL2561_Unified tsl)
+void setupSensor(TSL2561 tsl)
 {
   /* You can also manually set the gain or enable auto-gain support */
   switch (gain) {
     case 0:
-      tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
+      tsl.setGain(TSL2561_GAIN_0X);      /* No gain ... use in bright light to avoid sensor saturation */
       break;
-    case 1:
+    default:
       tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
-      break;
-    default: 
-      tsl.enableAutoGain(true);          /* Auto-gain ... switches automatically between 1x and 16x */
   } 
     
   /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
   switch (integrationTime) {
     case 0:
-      tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+      tsl.setTiming(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
       break;
     case 1:
-      tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
+      tsl.setTiming(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
       break;
     default: 
-      tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+      tsl.setTiming(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
   }
 }
 //-------------------------------------------------//
@@ -83,7 +93,7 @@ void odUpdate()
   //---------------
   // A) switch on emitter if necessary (nLambda = measure background, stored in col 5)
   if(nLambda > -1)
-    digitalWrite(ledPins[nLambda], HIGH);
+    analogWrite(ledPins[nLambda], emitterBrightness[nLambda]);
   //---------------
   // B) initiate measuring process in all chambers
 //  for(int iChamber=0; iChamber < numChambers; iChamber++)
@@ -99,7 +109,7 @@ void odUpdate()
   //---------------
   // E) switch off emitter again if necessary
   if(nLambda > -1)
-    digitalWrite(ledPins[nLambda], LOW);
+    analogWrite(ledPins[nLambda], 0);
 
 
   //---------------
@@ -195,7 +205,7 @@ void storeTSLdata(int iChamber, uint16_t bb, uint16_t ir)
     if(nLambda == -1) // background values, no need to bg subtraction
       odValues[iChamber][5]  = bb;
     else // normal OD values
-      odValues[iChamber][nLambda] = -log(abs(bb  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
+      odValues[iChamber][nLambda] = -log10(abs(bb  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
   }
 }
 

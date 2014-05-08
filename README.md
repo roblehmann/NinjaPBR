@@ -5,11 +5,8 @@ The CAPTOR is photobioreactor (pbr) which allows monitoring growth of a cyanobac
 
 The basic functions of the CAPTOR are currently the illumination of the liquid culture via a dimmable LED panel, the supply with air via an aquarium pump, the monitoring of the optical density of the culture and its temperature.
 
-<<<<<<< HEAD
-![CAPTOR setup](img/captor.jpg "CAPTOR setup")
-=======
-![CAPTOR setup](https://github.com/roblehmann/captor/blob/master/img/captor.jpg "CAPTOR setup")
->>>>>>> origin
+
+![CAPTOR setup](img/captor2.jpg "CAPTOR setup")
 
 Here you can find the CAPTOR pbr firmware, which currently handles the entire logic of the pbr.
 

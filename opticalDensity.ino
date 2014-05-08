@@ -22,10 +22,11 @@ void odUpdate()
   // remember if pump was active before OD measurement, then deactivate
   boolean orig_pump_state = airPumpState; 
   stopAirPump();
-
-  Vcc = readVcc() / thousand;
+  // turn of light if active
   analogWrite(ledPin, 0); 
-  delay(400); // wait for bubbling to settle
+  delay(300); // wait for bubbling to settle
+  // read current Vcc level for calculation
+  Vcc = readVcc() / thousand;
 
   for(int i=numLeds-1; i >= 0; i--)
     readOdSensors(i);
@@ -40,22 +41,32 @@ void odUpdate()
 void readOdSensors(int emitterIdx)
 {
   // read background brightness
-  delay(150);
-  odValBg  = readSensor(odPin);
-  odVal2Bg = readSensor(odPin2);
+  delay(140);
+  for(int i=0; i<numChambers; i++)
+  {
+    odValBg[i]  = readSensor(odPin[i]);
+    odVal2Bg[i] = readSensor(odPin2[i]);
+  }
   // read foreground brightness and calculate OD
   digitalWrite(ledPins[emitterIdx], HIGH);
-  delay(150);
+  delay(140);
   if(readReferenceValues)
   {
-    od1RefValues[emitterIdx] = readSensor(odPin)  - odValBg;
-    od2RefValues[emitterIdx] = readSensor(odPin2) - odVal2Bg;
+    for(int i=0; i<numChambers; i++)
+    {
+      od1RefValues[i][emitterIdx] = abs(readSensor(odPin[i])  - odValBg[i]);
+      od2RefValues[i][emitterIdx] = abs(readSensor(odPin2[i]) - odVal2Bg[i]);
+    }
   }
   else
   {
-    od1Values[emitterIdx] = -log((readSensor(odPin)  - odValBg) / od1RefValues[emitterIdx]);
-    od2Values[emitterIdx] = -log((readSensor(odPin2) - odVal2Bg) / od2RefValues[emitterIdx]);
+    for(int i=0; i<numChambers; i++)
+    {
+      od1Values[i][emitterIdx] = -log(abs(readSensor(odPin[i])  - odValBg[i]) / od1RefValues[i][emitterIdx]);
+      od2Values[i][emitterIdx] = -log(abs(readSensor(odPin2[i]) - odVal2Bg[i]) / od2RefValues[i][emitterIdx]);
+    }
   }
+  // switch off emitter again
   digitalWrite(ledPins[emitterIdx], LOW);
 }
 
@@ -65,31 +76,38 @@ float readSensor(int sensorPin)
   analogRead(sensorPin);  // discard first value from sensor
   sample = .0;
   for(int i=0; i<numReadingsAverage; i++)
-    sample = sample + (analogRead(sensorPin) / valDiv * Vcc);
+    sample = sample + (analogRead(sensorPin) / 1023.0 * Vcc);
   return(sample / numReadingsAverage);
 }
 
-// taken from
-// http://hacking.majenko.co.uk/making-accurate-adc-readings-on-arduino
+// taken from https://code.google.com/p/tinkerit/wiki/SecretVoltmeter
+//
+//const long scaleConst = 1156.300 * 1000 ; // internalRef * 1023 * 1000;
+const long scaleConst = 1125300L;
 long readVcc() {
-  long result;
   // Read 1.1V reference against AVcc
+  // set the reference to Vcc and the measurement to the internal 1.1V reference
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+  ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+  ADMUX = _BV(MUX5) | _BV(MUX0);
+#elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+  ADMUX = _BV(MUX3) | _BV(MUX2);
+#else
   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#endif 
+
   delay(2); // Wait for Vref to settle
-  ADCSRA |= _BV(ADSC); // Convert
-  while (bit_is_set(ADCSRA,ADSC));
-  result = ADCL;
-  result |= ADCH<<8;
-  result = 1125300L / result; // Back-calculate AVcc in mV
-  return result;
+  ADCSRA |= _BV(ADSC); // Start conversion
+  while (bit_is_set(ADCSRA,ADSC)); // measuring
+
+  uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH 
+  uint8_t high = ADCH; // unlocks both
+
+  long result = (high<<8) | low;
+
+  result = scaleConst / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+  return (long)result; // Vcc in millivolts
 }
-
-
-
-
-
-
-
-
 
 

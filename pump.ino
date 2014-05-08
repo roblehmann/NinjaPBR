@@ -13,6 +13,7 @@ void startAirPump()
 {
   // air by pump on/off control
   airPumpState = HIGH;
+  // air by pinch valv control
   digitalWrite(airValvePin, LOW);
 }
 
@@ -49,18 +50,18 @@ void turbidityUpdate()
   // TODO: could combine starting and continuing condition. but for clarity...
   if(!inTurbidostat) return; // turbidostat not active
   // TS active, and dilution not started and upper OD at 750nm (sensor2) is exceeded -> start dilution process
-  if(!inDilution & od2Values[1] > upperOdThr) 
+  if(!inDilution & od2Values[1][1] > upperOdThr) 
   {
     inDilution = true;
     doDilution(dilutionDuration);
   }
   // TS active, dilution started and lower OD at 750nm (sensor2) is exceeded -> continue dilution process
-  else if(inDilution & od2Values[1] > lowerOdThr)
+  else if(inDilution & od2Values[1][1] > lowerOdThr)
   {
     doDilution(dilutionDuration);
   }
   // TS active, dilution started and OD is below lower thr -> stop dilution process
-  else if(inDilution & od2Values[1] <= lowerOdThr)
+  else if(inDilution & od2Values[1][1] <= lowerOdThr)
   {
     inDilution = false;
   }

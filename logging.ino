@@ -1,30 +1,41 @@
 void loggingSetup()
 {
-// nothing to do for me here...
+  // nothing to do for me here...
 }
 
 void loggingEvent()
 {
-  // send to computer
+  // send message type
   Serial.print("DATA;");
-  for(int i=0; i < numLeds; i++)
+  
+  // send intensity values
+  for(int j=0; j<numChambers; j++)
   {
-    Serial.print(od1Values[i]);
-    Serial.print(sep);
-  }
-  for(int i=0; i < numLeds; i++)
-  {
-    Serial.print(od2Values[i]);
-    if(!(i == numLeds-1)) 
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od1Values[j][i]);
+      Serial.print(sep);
+    }
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od2Values[j][i]);
+      if(!((j == numChambers-1) && (i == numLeds-1))) 
         Serial.print(sep);
+    }
   }
   Serial.print(';');
   
-  Serial.print(odValBg);
-  Serial.print(sep);
-  Serial.print(odVal2Bg);
+  // send background intensity values 
+  for(int j=0; j<numChambers; j++)
+  {
+    Serial.print(odValBg[j]);
+    Serial.print(sep);
+    Serial.print(odVal2Bg[j]);
+    if(j<numChambers-1) Serial.print(sep);
+  }
   Serial.print(';');
   
+  //  send other parameters
   Serial.print(temperatureMeasuredInLiquid());
   Serial.print(sep);
   Serial.print(lightBrightness);
@@ -42,16 +53,19 @@ void loggingEvent()
 // announce reference values used for OD calculation
 void sendReferenceValues()
 {
-    Serial.print("REF;");
-  for(int i=0; i < numLeds; i++)
+  Serial.print("REF;");
+  for(int j=0; j<numChambers; j++)
   {
-    Serial.print(od1RefValues[i]);
-    Serial.print(sep);
-  }
-  for(int i=0; i < numLeds; i++)
-  {
-    Serial.print(od2RefValues[i]);
-    Serial.print(sep);
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od1RefValues[j][i]);
+      Serial.print(sep);
+    }
+    for(int i=0; i < numLeds; i++)
+    {
+      Serial.print(od2RefValues[j][i]);
+      Serial.print(sep);
+    }
   }
   Serial.println();
 }
@@ -78,6 +92,9 @@ void sendMode()
   Serial.print(BIOREACTOR_MODE);
   Serial.println(sep);
 }
+
+
+
 
 
 

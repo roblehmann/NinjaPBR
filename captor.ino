@@ -15,9 +15,9 @@
 #define BIOREACTOR_DYNAMIC_MODE   3   // light varies according to uploaded dynamic profile, od/temp. measured
 #define BIOREACTOR_ERROR_MODE     4   // something went wrong,switch off everything
 
-//---------- CONSTANTS-DETEKTOR -----//
-#define  odPin      A0  // OD detector diode
-#define  odPin2     A1  // OD detectpor diode
+//---------- CONSTANTS-DETEKTORS -----//
+const int  odPin[]  = {A0,A2};  // OD detector diode type 1
+const int  odPin2[]  = {A1,A3};  // OD detectpor diode type 2
 //----------CONSTANTS-LIGHT--------- //
 #define  ledPin     3  // LED panel connected to digital pin 3
 //----------CONSTANTS- EMITTER --------- //
@@ -26,14 +26,19 @@
 #define  bluePin    10  //blue-Emitter diode
 #define  ir740Pin   11  //IR-Emitter diode
 #define  ir850Pin   12  //IR-Emitter diode
+
+#define numLeds 5     // number of emitters with different wavelength
+// number of culture chambers with individual OD sensors
+// needs to match the number of OD sensor pins per type
+#define numChambers 1
+const int ledPins[] = {
+  ir850Pin, ir740Pin, redPin, greenPin, bluePin};
+
+
 //----------CONSTANTS-GAS--------- //
 #define  airValvePin 5
 //----------CONSTANTS-MEDIUM--------- //
 #define  mediumPumpPin 6
-
-
-const int ledPins[] = {
-  ir850Pin, ir740Pin, redPin, greenPin, bluePin};
 
 // marks default state of timer
 #define timerNotSet -1
@@ -74,22 +79,20 @@ float    upperOdThr       = 1;       // when to start diluting
 float    lowerOdThr       = .8;      // when to stop diluting
 
 // OD MEASUREMENTS //
-// foreground od measurements
-#define numLeds 5
+// number of OD measurements to average for resulting OD
 #define numReadingsAverage 8.0
-#define valDiv 1023.0
-// ir850, ir740, red, green, blue
-float od1Values[5];
-float od2Values[5];
+// array storing the resulting OD values for logging
+float od1Values[numChambers][numLeds] = {0};
+float od2Values[numChambers][numLeds] = {0};
 
 //reference values for OD calculation
 // ir850, ir740, red, green, blue
-float od1RefValues[5] = {5,5,5,5,5};
-float od2RefValues[5] = {5,5,5,5,5};
+float od1RefValues[numChambers][numLeds] = {5};
+float od2RefValues[numChambers][numLeds] = {5};
 
 // background od measurements
-float odValBg = 0.0;
-float odVal2Bg = 0.0;
+float odValBg[numChambers] = {0};
+float odVal2Bg[numChambers] = {0};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;
@@ -98,7 +101,7 @@ boolean readReferenceValues = false;
 boolean airPumpState;
 
 // how often to measure od/temp
-unsigned long sensorSamplingTime = 10L; //seconds
+unsigned long sensorSamplingTime = 2L; //seconds
 
 // store timer IDs, to be able to remove them when the BIOREACTOR_MODE or the sample timer change
 int lightChangeTimerID = -1;
@@ -117,6 +120,7 @@ void setup()  {
   inputString.reserve(50);
   // init serial connection to controlling computer
   Serial.begin(9600);
+  // initialize reactor functions
   lightSetup();
   temperatureSetup();
   odSetup();
@@ -314,6 +318,7 @@ void digestMessage()
     Serial.println(paramName);
   }
 }
+
 
 
 

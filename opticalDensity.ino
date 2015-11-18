@@ -1,3 +1,8 @@
+/*-------------------------
+management of optical density measurements
+-------------------------*/
+
+
 // timer id for next wavelengths measurement (need to wait until each measurement is finished, and start afterwards)
 int nextWavelengthReadTimerID = -1;
 

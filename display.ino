@@ -1,3 +1,7 @@
+/*-------------------------
+data display on touch TFT
+-------------------------*/
+
 extern uint8_t SmallFont[];
 extern uint8_t BigFont[];
 extern uint8_t Dingbats1_XL[];
@@ -98,7 +102,7 @@ void prepareBoxDisplay()
   myGLCD.clrScr();
   setBoxModeBgCol();
   myGLCD.setFont(BigFont);
-  myGLCD.print("Captor Photobioreactor", 5, 10);
+  myGLCD.print("NinjaPBR", 5, 10);
   myGLCD.setFont(SmallFont);
   
   myGLCD.print(F("OD[a.u.]:"), 10, 50);

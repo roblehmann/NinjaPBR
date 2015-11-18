@@ -1,11 +1,9 @@
-// CAPTOR
-// Cyanobacterial Arduino-based PhotobioreacTOR
+/*-------------------------
+// NinjaPBR
+// Arduino-based Photobioreactor for the cultivation of cyanobacteria and microalgae
 //
-// bioreactor firmware for the Arduino-based photobioreactor v0.1
 // Author: r.lehmann@biologie.hu-berlin.de
-
-//TODO: 
-// parameter for display orientation (use it upside down if u want)
+-------------------------*/
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -75,7 +73,7 @@ unsigned long  brightnessDuration[3][lightProfileLength];
 int            lightProfileIdx[3] = {0}; // indicates the current position in the light profile 
 
 // Turbidostat Mode //
-// if active, captor checks of optical density exceeds "upperOdThr". if so, a
+// if active, reactor checks of optical density exceeds "upperOdThr". if so, a
 // series of dilution steps of length dilutionDuration are issued, until the OD
 // is found below "lowerOdThr"
 boolean  inTurbidostat    = false;   // is turbidostat mode is active
@@ -95,7 +93,7 @@ float refValues[numChambers][ 6 ] = {65535, 65535, 65535, 65535, 65535, 65535};
 
 // emitter-specific brightness value. 
 // adjust this value to optimize for individual geometry
-float emitterBrightness[ 5 ] = {100,162,255,255,255}; //set to 110 for 5mm cuvette and sfh4550
+float emitterBrightness[ 5 ] = {100,162,255,255,255};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;
@@ -122,7 +120,7 @@ String sepT = "/";  //separator char for logging and display
 String curr_t; // holds time stamp of current sample
 
 // SD logging vars
-#define FILE_BASE_NAME "CAPLog"
+#define FILE_BASE_NAME "NPLog"
 char fileName[13] = FILE_BASE_NAME "00.csv";
 bool SDavail = false;
 bool SDlogging = false;

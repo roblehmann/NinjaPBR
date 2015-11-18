@@ -1,3 +1,8 @@
+/*-------------------------
+management of data logging in controller (to SD) 
+and transfer to computer (via USB)
+-------------------------*/
+
 // rounding accuracy
 int nPositions = 6;
 // for SD card initialization
@@ -210,7 +215,7 @@ void sendLightProfile(int chamber)
 }
 
 /*----------------------- 
-announce current CAPTOR mode
+announce current NinjaPBR mode
 -----------------------*/
 void sendMode()
 {
@@ -473,7 +478,7 @@ boolean saveParameters()
   // save SD logging state
   file.print((int)SDlogging);
   file.println(F(",-1,"));
-  file.print(F("Captor PBR Parameters, "));
+  file.print(F("NinjaPBR Parameters, "));
   file.println(curr_t);
   // Force data to SD and update the directory entry to avoid data loss.
   if (!file.sync() || file.getWriteError()) 

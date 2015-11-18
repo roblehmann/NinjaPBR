@@ -40,7 +40,7 @@ void StopSendingHandshake()
   }
 }
 /*----------------------- 
-send basic parameters of the CAPTOR instance to serial
+send basic parameters of the NinjaPBR instance to serial
 -----------------------*/
 void sendHandshake()
 {

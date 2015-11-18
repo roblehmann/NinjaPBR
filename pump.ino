@@ -1,3 +1,8 @@
+/*-------------------------
+management of gas supply in 
+sample pods
+-------------------------*/
+
 void pumpSetup()
 {
    // setup air pump

@@ -1,9 +1,8 @@
-/*
-This code was taken from the Arduino forum (arduino.cc).
- It has been modified to meet the project's needs.
- */
+/*-------------------------
+management of temperature measurements in 
+sample pod water bath
+-------------------------*/
 
-// DS18S20 Temperature chip i/o
 OneWire owInLiquid(PIN_TEMPERATURE_SENSOR_IN_LIQUID);
 DallasTemperature dsInLiquid(&owInLiquid);
 DeviceAddress tempAdd[3];

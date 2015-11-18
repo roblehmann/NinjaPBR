@@ -6,25 +6,25 @@ This code was taken from the Arduino forum (arduino.cc).
 // DS18S20 Temperature chip i/o
 OneWire owInLiquid(PIN_TEMPERATURE_SENSOR_IN_LIQUID);
 DallasTemperature dsInLiquid(&owInLiquid);
-DeviceAddress deviceAddressInLiquid;
-DeviceAddress tempDeviceAddress; // We'll use this variable to store a found device address
-float temperatureInLiquid = 0.0;
+DeviceAddress tempAdd[3];
 
-
+/*-------------------------
+setup temperature measurement
+-------------------------*/
 void temperatureSetup()
 {
-//  Serial.println("inited temp.");
-
   dsInLiquid.begin();
-  if (!dsInLiquid.getAddress(deviceAddressInLiquid, 0)) {
-    BIOREACTOR_MODE=BIOREACTOR_ERROR_MODE;
-//    Serial.println("ERROR in temp. sensor");
-  } 
-  else {
-    dsInLiquid.setWaitForConversion(false);
-    dsInLiquid.setResolution(deviceAddressInLiquid, 12);
-    dsInLiquid.requestTemperatures();
-  }
+  for(int i=0; i<numChambers; i++)
+    if (!dsInLiquid.getAddress(tempAdd[i], i)) {
+      BIOREACTOR_MODE=BIOREACTOR_ERROR_MODE;
+      sendError(F("temp. sensor not found"));
+    } 
+    else 
+    {
+  //    dsInLiquid.setWaitForConversion(false);
+      dsInLiquid.setResolution(tempAdd[i], 12);
+      dsInLiquid.requestTemperatures();
+    }
   // We want to be sure that the conversion has been done
   delay(400);
 }
@@ -32,10 +32,6 @@ void temperatureSetup()
 void temperatureUpdate()
 {  
   dsInLiquid.requestTemperatures();
-  temperatureInLiquid=dsInLiquid.getTempC(deviceAddressInLiquid);
-}
-
-float temperatureMeasuredInLiquid()
-{
-  return temperatureInLiquid;
+  for(int i=0; i<numChambers; i++)
+    temperatureInLiquid[i] = dsInLiquid.getTempC(tempAdd[i]);
 }

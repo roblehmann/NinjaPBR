@@ -1,38 +1,54 @@
-
+/*-----------------------
+setup function
+-----------------------*/
 void lightSetup()
 {
-  pinMode(ledPin, OUTPUT);
+  //set timer 2 (9,10) to 31.374 KHz
+  TCCR2B = (TCCR2B & 0xF8) | 0x01;
+  //set timer 1 (11,12) to 31.374 KHz
+  TCCR1B = (TCCR1B & 0xF8) | 0x01;
+  
+  // initialize all light pins
+  for(int i=0; i<3; i++)
+    pinMode(lightPins[i], OUTPUT);
   // initially switch light off
-  lightOff();
+  setMaxMinLight(MIN_LIGHT);
 }
 
-// checks if reactor is in circadian mode, then updates brightness
-void lightUpdate()
-{  
+/*-----------------------
+checks if reactor is in circadian mode, then updates brightness
+-----------------------*/
+void lightUpdate(int channel)
+{
   switch (BIOREACTOR_MODE) {
   case BIOREACTOR_DYNAMIC_MODE:
     {
       // advance index
-      lightProfileIdx += 1;
+      lightProfileIdx[channel] += 1;
       // start from beginning if necessary
       // to allow for shorter light profiles than the full lightProfileLength, also return to first value if duration 0 is found
-      if( (lightProfileIdx >= lightProfileLength) | (brightnessDuration[lightProfileIdx] == 0) )
-        lightProfileIdx = 0;
+      if( (lightProfileIdx[channel] >= lightProfileLength) | (brightnessDuration[channel][lightProfileIdx[channel]] == 0) )
+        lightProfileIdx[channel] = 0;
       // set panel brightness
-      lightBrightness = brightnessValue[lightProfileIdx];
-      analogWrite(ledPin, lightBrightness);
+      lightBrightness[channel] = brightnessValue[channel][lightProfileIdx[channel]];
+      analogWrite(lightPins[channel], lightBrightness[channel]);
       // update light brightness after appropriate time
-      lightChangeTimerID = t.after(long(brightnessDuration[lightProfileIdx]) * 1000L, lightUpdate); 
+      if(channel == 0)
+        lightChangeTimerID[channel] = t.after(long(brightnessDuration[channel][lightProfileIdx[channel]]) * 1000L, lightUpdate0); 
+      else if(channel == 1)
+        lightChangeTimerID[channel] = t.after(long(brightnessDuration[channel][lightProfileIdx[channel]]) * 1000L, lightUpdate1); 
+      else
+        lightChangeTimerID[channel] = t.after(long(brightnessDuration[channel][lightProfileIdx[channel]]) * 1000L, lightUpdate2);
       break;
     }
   case BIOREACTOR_LIGHT_MODE:
     {
-      lightOn();
+      setMaxMinLight(MAX_LIGHT);
       break;
     }
   case BIOREACTOR_DARK_MODE | BIOREACTOR_ERROR_MODE:
     {
-      lightOff();
+      setMaxMinLight(MIN_LIGHT);
       break;
     }
   default: 
@@ -40,43 +56,62 @@ void lightUpdate()
   }
 }
 
-//---------   switch light on permanently ---------//
-void lightOff() 
+/*-----------------------
+dirty hack to circumvent not being able to pass parameters via timer callback functions
+-----------------------*/
+void lightUpdate0()
+{
+  lightUpdate(0);
+}
+void lightUpdate1()
+{
+  lightUpdate(1);
+}
+void lightUpdate2()
+{
+  lightUpdate(2);
+}
+
+/*------------------
+switch light on permanently 
+------------------*/
+void setMaxMinLight(int flag) 
 {
   // most importantly, set brightness to min
-  lightBrightness = minLightBrightness;
-  // write to pin, to make it effective immediately
-  analogWrite(ledPin, lightBrightness);
-  if(lightChangeTimerID != timerNotSet) {    // remove if set before
-    t.stop(lightChangeTimerID); 
-    lightChangeTimerID = timerNotSet;
+  for (int i = 0; i < 3; i++) {
+    if(flag == MIN_LIGHT)
+      lightBrightness[i] = minLightBrightness[i];
+    else
+      lightBrightness[i] = maxLightBrightness[i];
+      
+    // write to pin, to make it effective immediately
+    analogWrite(lightPins[i], lightBrightness[i]);
+
+    // remove light change time (dynamic light mode) if set before
+    if(lightChangeTimerID[i] != timerNotSet) 
+    {
+      t.stop(lightChangeTimerID[i]); 
+      lightChangeTimerID[i] = timerNotSet;
+    }
   }
 }
 
-//---------   switch light on permanently ---------//
-void lightOn()
-{
-  // most importantly, set brightness to max
-  lightBrightness = maxLightBrightness;
-  // write to pin, to make it effective immediately
-  analogWrite(ledPin, lightBrightness);
-  if(lightChangeTimerID != timerNotSet) {    // remove if set before
-    t.stop(lightChangeTimerID); 
-    lightChangeTimerID = timerNotSet;      // mark timer as not set
-  }
-}
-
-//---------  dynamic light regulation setup --------------//
+/*-----------------------
+dynamic light regulation setup 
+-----------------------*/
 void startDynamicLightTimers()
 {
-  // make sure to have only one timer running
-  if(lightChangeTimerID != timerNotSet) {    // remove if set before
-    t.stop(lightChangeTimerID); 
-    lightChangeTimerID = timerNotSet;      // mark timer as not set
+  for(int i=0; i<3; i++)
+  {
+    // make sure to have only one timer running
+    if(lightChangeTimerID[i] != timerNotSet) {    // remove if set before
+      t.stop(lightChangeTimerID[i]); 
+      lightChangeTimerID[i] = timerNotSet;      // mark timer as not set
+    }
+    // set light profile pointer to end, so that calling advaning function it start from the beginning
+    lightProfileIdx[i] = lightProfileLength;
+    lightUpdate(i);
   }
-  // set light profile pointer to end, so that calling advaning function it start from the beginning
-  lightProfileIdx = lightProfileLength;
-  lightUpdate();
 }
 
 

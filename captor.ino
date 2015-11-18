@@ -4,11 +4,21 @@
 // bioreactor firmware for the Arduino-based photobioreactor v0.1
 // Author: r.lehmann@biologie.hu-berlin.de
 
+//TODO: 
+// parameter for display orientation (use it upside down if u want)
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Timer.h>
 #include <Wire.h>
 #include <TSL2561_mod.h>
+#include <DS3232RTC.h>
+#include <Time.h>
+#include <UTFT.h>
+#include <UTouch.h>
+#include <UTFT_Buttons.h>
+#include <SPI.h>
+#include <SdFat.h>
 
 //----------CONSTANTS-GLOBAL--------- //
 #define BIOREACTOR_STANDBY_MODE   0   // nothing on, nothing measured
@@ -18,24 +28,23 @@
 #define BIOREACTOR_ERROR_MODE     4   // something went wrong,switch off everything
 
 //----------CONSTANTS-LIGHT--------- //
-#define  ledPin     3  // LED panel connected to digital pin 3
-//----------CONSTANTS- EMITTER --------- //
-#define  redPin     8  //Red-Emitter diode
-#define  greenPin   9  //green-Emitter diode
-#define  bluePin    10  //blue-Emitter diode
-#define  ir740Pin   11  //IR-Emitter diode
-#define  ir850Pin   12  //IR-Emitter diode
+//#define  ledPin     13  // LED panel connected to digital pin 3
+const int lightPins[] = {11,12,13};
 
-#define numLeds 5     // number of emitters with different wavelength
+#define MAX_LIGHT     0   // set illumination to specified max
+#define MIN_LIGHT     1   // set illumination to specified min
+
+//----------CONSTANTS- EMITTER --------- //
+#define numLeds 1     // number of emitters with different wavelength
 // number of culture chambers with individual OD sensors
 // needs to match the number of OD sensor pins per type
-#define numChambers 2
-const int ledPins[] = {
-  ir850Pin, ir740Pin, redPin, greenPin, bluePin};
+const int ledPins[] = {8, 10};
 
+//----------Number of Pods --------- //
+#define numChambers 2
 
 //----------CONSTANTS-GAS--------- //
-#define  airValvePin 5
+#define  airValvePin 9
 //----------CONSTANTS-MEDIUM--------- //
 #define  mediumPumpPin 6
 
@@ -43,7 +52,7 @@ const int ledPins[] = {
 #define timerNotSet -1
 
 //----------CONSTANTS-TEMPERATURE--------- //
-#define PIN_TEMPERATURE_SENSOR_IN_LIQUID  2   // temperature on culure bottle
+#define PIN_TEMPERATURE_SENSOR_IN_LIQUID  19   // culture temperature
 
 //----------TIMER DECLARATION--------- //
 Timer t;
@@ -54,16 +63,16 @@ byte BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
 byte bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
 
 // LIGHT REGULATION //
-byte minLightBrightness = 0;
-byte maxLightBrightness = 255;
+byte minLightBrightness[3] = {0};
+byte maxLightBrightness[3] = {255, 255, 255};
 
-byte lightBrightness = 0;       // holds brightness of LED panel in range 0-255 (0=off)
+byte lightBrightness[3] = {0};       // holds brightness of LED panel in range 0-255 (0=off)
 
 // Light profile //
 const int      lightProfileLength = 200;
-byte           brightnessValue[lightProfileLength];
-unsigned long  brightnessDuration[lightProfileLength];
-int            lightProfileIdx; // indicates the current position in the light profile 
+byte           brightnessValue[3][lightProfileLength];
+unsigned long  brightnessDuration[3][lightProfileLength];
+int            lightProfileIdx[3] = {0}; // indicates the current position in the light profile 
 
 // Turbidostat Mode //
 // if active, captor checks of optical density exceeds "upperOdThr". if so, a
@@ -78,35 +87,53 @@ float    lowerOdThr       = .8;      // when to stop diluting
 // OD MEASUREMENTS //
 // array storing the resulting OD values for logging
 // column 5 stores background values, column 0-4 the background-corrected OD values
-float odValues[numChambers][ (numLeds + 1) ] = {0};
+float odValues[numChambers][ 6 ] = {0};
 
 //reference values for OD calculation
 // column 5 stores background values, column 0-4 the background-corrected reference intensity values
-float refValues[numChambers][ (numLeds + 1) ] = {5};
+float refValues[numChambers][ 6 ] = {65535, 65535, 65535, 65535, 65535, 65535};
 
-// emitter-specific brightness value
-float emitterBrightness[ numLeds ] = {255,210,220,120,255};
+// emitter-specific brightness value. 
+// adjust this value to optimize for individual geometry
+float emitterBrightness[ 5 ] = {100,162,255,255,255}; //set to 110 for 5mm cuvette and sfh4550
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
 boolean readReferenceValues = false;
+//flag indicating if reference values were read already
+String referenceValuesDone = "";
 
 // AIR PUMP REGULATION //
 boolean airPumpState;
-//Servo airValve;
-//#define airValveOpenAngle 8
-//#define airValveClosedAngle 64
 
 // how often to measure od/temp
 unsigned long sensorSamplingTime = 5L; //seconds
 
 // store timer IDs, to be able to remove them when the BIOREACTOR_MODE or the sample timer change
-int lightChangeTimerID = -1;
+int lightChangeTimerID[] = {-1, -1, -1};
 int sensorReadTimerID = -1;
+
+float temperatureInLiquid[3] = {0, 0, 0};
 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 // for logging and communication
 const char* sep = ",";
+String sepT = "/";  //separator char for logging and display
+String curr_t; // holds time stamp of current sample
+
+// SD logging vars
+#define FILE_BASE_NAME "CAPLog"
+char fileName[13] = FILE_BASE_NAME "00.csv";
+bool SDavail = false;
+bool SDlogging = false;
+//send handshakes until connected
+bool serialConnected = false;
+
+const int line_buffer_size = 120;
+char buffer[line_buffer_size];
+String paramName;
+float  paramValue;
+
 
 //----------------------------- //
 //----------setting up--------- //
@@ -114,13 +141,14 @@ const char* sep = ",";
 void setup()  {
   // for serial input message
   inputString.reserve(50);
-  // init serial connection to controlling computer
-  Serial.begin(9600);
   // initialize reactor functions
+  initSerial();
   lightSetup();
   temperatureSetup();
   odSetup();
   pumpSetup();
+  loggingSetup();
+  setupDisplay();
   // update all the sensor data for once before doing the first log
   updateSensorLogValues();
 
@@ -134,6 +162,8 @@ void setup()  {
 void loop()  { 
   // update the timer
   t.update();
+  //check if mode change seleceted via display
+  check_settings_selected();
   // read new configuration from Serial
   checkSerialMessage();
   // check if reactor mode changed and make changes effective
@@ -141,7 +171,7 @@ void loop()  {
 }
 
 
-void checkChangedReactorMode () 
+void checkChangedReactorMode() 
 {
   // check if reactor mode changed, and put changes into effect
   if(bioreactorAncientMode != BIOREACTOR_MODE)  
@@ -155,13 +185,13 @@ void checkChangedReactorMode ()
         startAirPump();
         // switch off light, remove timers
         stopSensorReadTimer();
-        lightOff();
+        setMaxMinLight(MIN_LIGHT);
         break;
       }
     case BIOREACTOR_DYNAMIC_MODE:
       {
         // activate air pump 
-        startAirPump() ;
+        startAirPump();
         // ------------ Adding timed actions ----------
         startSensorReadTimer();
         startDynamicLightTimers();
@@ -169,33 +199,35 @@ void checkChangedReactorMode ()
       }
     case BIOREACTOR_LIGHT_MODE:
       {
-        startAirPump() ;
-        lightOn();
+        startAirPump();
+        setMaxMinLight(MAX_LIGHT);
         startSensorReadTimer();
+        Serial.println(F("Set Light Mode"));
         break;
       }
     case BIOREACTOR_DARK_MODE:  
       {
-        startAirPump() ;
-        lightOff();
+        startAirPump();
+        setMaxMinLight(MIN_LIGHT);
         startSensorReadTimer();
         break;
       }
     case BIOREACTOR_ERROR_MODE:
       {
-        stopAirPump() ;
-        lightOff();
+        stopAirPump();
+        setMaxMinLight(MIN_LIGHT);
         stopSensorReadTimer();
         break;
       }
     default:
       BIOREACTOR_MODE = BIOREACTOR_ERROR_MODE;
-      startAirPump() ;
-      lightOff();
+      startAirPump();
+      setMaxMinLight(MIN_LIGHT);
       stopSensorReadTimer();
       break;
     }
     sendMode();
+    showData();
   }
 }
 
@@ -211,7 +243,10 @@ void serialEvent() {
     // add it to the inputString:
     inputString += inChar;
     // character "#" marks end of message, if seen trigger digestion
-    if (inChar == '#') stringComplete = true;
+    if (inChar == '#') 
+      stringComplete = true;
+    else // wait for serial buffer, otherwise get overflows and thus dropped messages from computer 
+      delay(20);
   }
 }
 
@@ -226,28 +261,24 @@ void checkSerialMessage() {
   }
 }
 
-char   charBuf[30];
-String paramName;
-float  paramValue;
-
-/* method takes message from controlling computer and parses it, assigning the 
+/*-------------------------------- 
+ method takes message from controlling computer and parses it, assigning the 
  command value to the corresponding variable. 
  messages structure:
  parameterName:parameterValue#
- */
+ --------------------------------*/
 void digestMessage() 
 {
-  inputString.toCharArray(charBuf, 30); 
-  paramName = strtok(charBuf,sep);
+  inputString.toCharArray(buffer, line_buffer_size); 
+  paramName = strtok(buffer,sep);
   paramValue = atof(strtok(NULL,sep));
-  Serial.println(paramName);
-  Serial.println(paramValue);
 
-  if(paramName == "md") // which reactor program to use
+  if(paramName == F("md")) // which reactor program to use
   {
     BIOREACTOR_MODE = paramValue;
+    prepareBoxDisplay();
   }
-  else if(paramName == "sst") // how often to sample
+  else if(paramName == F("sst")) // how often to sample
   {
     sensorSamplingTime = paramValue;
     if(sensorReadTimerID != timerNotSet) // if sampling is currently active, make new frequency active
@@ -256,59 +287,100 @@ void digestMessage()
       startSensorReadTimer(); // standby mode and reinit reactor mode
     }
   }
-  else if(paramName == "malb") // maximal brightness of the LED panel
+  else if(paramName == F("malb")) // maximal brightness of the LED panel
   {
-    maxLightBrightness = paramValue;
-    lightUpdate();
+    maxLightBrightness[0] = paramValue;
+    for(int i=1; i < numChambers; i++)
+    {
+      maxLightBrightness[i] =  atoi(strtok(NULL,sep));
+    }
+    for(int i=0; i < numChambers; i++)
+      lightUpdate(i);
   }
-  else if(paramName == "milb") // maximal brightness of the LED panel
+  else if(paramName == F("milb")) // minimal brightness of the LED panel
   {
-    minLightBrightness = paramValue;
-    lightUpdate();
+    
+    minLightBrightness[0] = paramValue;
+    for(int i=1; i < numChambers; i++)
+    {
+      minLightBrightness[i] = atoi(strtok(NULL,sep));
+    }
+    for(int i=0; i < numChambers; i++)
+      lightUpdate(i);
   }
-  else if(paramName == "mre") // measure reference values for OD calculation
+  else if(paramName == F("mre")) // measure reference values for OD calculation
   {
     // set flag to read reference values (without OD calculation)
     readReferenceValues = true;
     odUpdate();
   }
-  else if(paramName == "bp") // receive brightness profile values
+  else if(paramName == F("bp")) // receive brightness profile values
   {
-    if( (paramValue >= 0) & (paramValue < lightProfileLength) )
+    if( paramValue >= 0 && paramValue < numChambers) // check if valid chamber is addressed
     {
-      // first value is the index, second is the brightness (0-255), third is the duration in seconds
-      brightnessValue[int(paramValue)] = atoi(strtok(NULL,sep));
-      brightnessDuration[int(paramValue)] = atol(strtok(NULL,sep));
+      // first value is the channel, second the index, third is the brightness (0-255), fourth is the duration in seconds
+      int idx = atoi(strtok(NULL,sep));
+      if(idx >= 0 && idx < lightProfileLength)
+      {
+        brightnessValue[int(paramValue)][idx]     = atoi(strtok(NULL,sep));
+        brightnessDuration[int(paramValue)][idx]  = atol(strtok(NULL,sep));
+        Serial.print('MSG,');
+        Serial.print((String) brightnessValue[int(paramValue)][idx] );
+        Serial.print(' ');
+        Serial.print((String)brightnessDuration[int(paramValue)][idx]);
+        Serial.print(' ');
+        Serial.println(idx);
+      }
+      else 
+      {
+        sendError(F("invalid light profile idx"));
+      }
     } 
     else {
-      Serial.println("invalid idx");
+      sendError(F("invalid channel"));
     }
   }  
-  else if(paramName == "it") // set turbidostat mode. if paramValue==1, activate, otherwise deactivate
+  else if(paramName == F("it")) // set turbidostat mode. if paramValue==1, activate, otherwise deactivate
   {
     inTurbidostat = (paramValue==1);
   }
-  else if(paramName == "dd") // set length of dilution (how long the medium pump runs in seconds)
+  else if(paramName == F("dd")) // set length of dilution (how long the medium pump runs in seconds)
   {
     dilutionDuration = paramValue;
   }
-  else if(paramName == "uot") // OD when to start dilution
+  else if(paramName == F("uot")) // OD when to start dilution
   {
     upperOdThr = paramValue;
   }
-  else if(paramName == "lot") // OD when to stop dilution
+  else if(paramName == F("lot")) // OD when to stop dilution
   {
     lowerOdThr = paramValue;
   }
-  else if(paramName == "sbp") // receive brightness profile values
+  else if(paramName == F("sbp")) // receive brightness profile values
   {
-    sendLightProfile();
+    sendLightProfile(paramValue);
+  }
+  else if(paramName == F("hi")) // acknowledge serial connect
+  {
+    //set back flag to stop sending handshakes again
+    serialConnected = true;
+    StopSendingHandshake();
+  }
+  else if(paramName == F("bye")) // acknowledge serial disconnect
+  {
+    //set back flag to start sending handshakes again
+    serialConnected = false;
+    StartSendingHandshake();
+  }
+  else if(paramName == F("log")) // request to send all log data from current file
+  {
+    sendLogData();
   }
   else
   {
-    Serial.print("unknown");
-    Serial.println(paramName);
+    sendError("unknown message: " + paramName);
   }
+  saveParameters();
 }
 
 

@@ -1,16 +1,13 @@
 // timer id for next wavelengths measurement (need to wait until each measurement is finished, and start afterwards)
 int nextWavelengthReadTimerID = -1;
 
-//Adafruit_TSL2561_Unified tsl1 = NULL;
-//Adafruit_TSL2561_Unified tsl2 = NULL;
-//Adafruit_TSL2561_Unified tsl3 = NULL;
 TSL2561 tsl1 = NULL; 
 TSL2561 tsl2 = NULL; 
 TSL2561 tsl3 = NULL; 
 
 
 // setup for gain 0:1x, 1:16x, 2: autogain
-int gain = 0;
+int gain = 1;
 // setup for sensor integration period 0:13ms, 1:101ms, 2:402ms
 int integrationTime = 2;
 //-------------------------------------------------//
@@ -19,37 +16,26 @@ int integrationTime = 2;
 void odSetup()
 {
   //  setup emitters
-  pinMode(ir850Pin, OUTPUT);
-//  digitalWrite(ir850Pin, LOW);    
-  analogWrite(ir850Pin, 0);
-  pinMode(ir740Pin, OUTPUT);
-//  digitalWrite(ir740Pin, LOW);
-  analogWrite(ir740Pin, 0);
-  pinMode(redPin, OUTPUT);
-//  digitalWrite(redPin, LOW);    
-  analogWrite(redPin, 0);
-  pinMode(greenPin, OUTPUT);
-//  digitalWrite(greenPin, LOW);    
-  analogWrite(greenPin, 0);
-  pinMode(bluePin, OUTPUT);
-//  digitalWrite(bluePin, LOW);    
-  analogWrite(bluePin, 0);
+  for(int i=0; i < numLeds; i++)
+  {
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);
+  }
   
   //------------------------------------------
   //  setup detectors
-//  tsl1 = Adafruit_TSL2561_Unified(TSL2561_ADDR_LOW,1);
-  tsl1 = TSL2561(TSL2561_ADDR_LOW);
+  tsl1 = TSL2561(TSL2561_ADDR_FLOAT);
   setupSensor(tsl1);
+  
+  // for multiple sensor setups, assume sensor address order float, low, high
   if(numChambers > 1)
   {
-//    tsl2 = Adafruit_TSL2561_Unified(TSL2561_ADDR_HIGH, 2);
-    tsl2 = TSL2561(TSL2561_ADDR_HIGH);
+    tsl2 = TSL2561(TSL2561_ADDR_LOW);
     setupSensor(tsl2);
   }
   if(numChambers > 2) 
   {
-//    tsl3 = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT,3);
-    tsl3 = TSL2561(TSL2561_ADDR_FLOAT);
+    tsl3 = TSL2561(TSL2561_ADDR_HIGH);
     setupSensor(tsl3);
   }
  }
@@ -94,6 +80,7 @@ void odUpdate()
   // A) switch on emitter if necessary (nLambda = measure background, stored in col 5)
   if(nLambda > -1)
     analogWrite(ledPins[nLambda], emitterBrightness[nLambda]);
+//      digitalWrite(ledPins[nLambda],HIGH);
   //---------------
   // B) initiate measuring process in all chambers
 //  for(int iChamber=0; iChamber < numChambers; iChamber++)
@@ -109,19 +96,20 @@ void odUpdate()
   //---------------
   // E) switch off emitter again if necessary
   if(nLambda > -1)
-    analogWrite(ledPins[nLambda], 0);
+//    analogWrite(ledPins[nLambda], 0);
+      digitalWrite(ledPins[nLambda],LOW);
 
 
   //---------------
   // calling next wavelengths reading process
-  if(nLambda >= (numLeds-1)) // done reading available wavelengths - finish OD reading
+  if(nLambda >= numLeds-1) // done reading available wavelengths - finish OD reading
   {
     odUpdateStop();  // put back pump in orig mode and switch light on
   }
   else // read OD and go to next wavelength
   {
     nLambda += 1;
-    // finally, call this function after waiting period for the next wavelength
+    // finally, call this function for the next wavelength
     odUpdate();
   }
 }
@@ -192,20 +180,20 @@ void fetchTSLsensorData()
 void storeTSLdata(int iChamber, uint16_t bb, uint16_t ir)
 {
   // TODO: test effect of IR subtraction on the resulting value (does IR yield usable correction term for high-pass filter)
-    // need to check if background / reference value / OD is measured and do according calculation
   if(readReferenceValues)
   {
     if(nLambda == -1) // ref background values, no need to bg subtraction
-      refValues[iChamber][5]  = bb;
+      refValues[iChamber][5]  = ir;
     else // store reference intensity, not OD
-      refValues[iChamber][nLambda] = abs(bb  - refValues[iChamber][5]); 
+      refValues[iChamber][nLambda] = ir  - refValues[iChamber][5];
   }
   else
   {
     if(nLambda == -1) // background values, no need to bg subtraction
-      odValues[iChamber][5]  = bb;
+      odValues[iChamber][5]  = ir;
     else // normal OD values
-      odValues[iChamber][nLambda] = -log10(abs(bb  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
+//      odValues[iChamber][nLambda] = -log10(ir / refValues[iChamber][nLambda]); 
+      odValues[iChamber][nLambda] = -log10(abs(ir  - odValues[iChamber][5]) / refValues[iChamber][nLambda]); 
   }
 }
 

@@ -4,6 +4,7 @@ NinjaPBR is an opensource (GPLv3) photobioreactor implementation to study the gr
 
 The firmware for the Arduino-based controller is located in this repository. The corresponding laser cutting templates and controller board Fritzing schematics are also provided here. The python-based graphical user interface can be found [here](https://github.com/roblehmann/pyNinjaPBR).
 
+Want to learn more? See the [wiki](https://github.com/roblehmann/NinjaPBR/wiki).
 
 ##Motivation
 One application of the NinjaPBR is the understanding of how cyanobacteria tell time. Some cyanobacterial strains predict the natural procession of light and dark phases during each day with an internal molecular clock consisting of the KaiA, B and C proteins. This clock evolved to accommodate the day length on earth of approximately 24h and can adapt to varying relative lengths of light and dark (LD) phases. The NinjaPBR allows the simulation of different day lengths, light and dark phase lengths, and also light brightness profiles over the subjective day. The observation of growth rates under extreme LD rhythms could indicate the limits of adaptibility of the circadian clock mechanism.

@@ -65,7 +65,7 @@ The NinjaPBR is designed to use a single controller box to control multiple Samp
 ---
 #Inspiration
 
-There are already a range of great bioreactor and photobioreactor designs out there, here is a small selection.
+There are already a range of great bioreactor and photobioreactor designs out there, here is a small selection. In addition, there are several other great instruments on github, such as the [NinjaPCR](https://github.com/hisashin/NinjaPCR) open source Thermocycler or a [plate reader](https://github.com/csbl/platereader).
 
 ###Synechocystis Physiological Parameters
 A small part pf the extensive [contribution](http://2015.igem.org/Team:Amsterdam/Project/Phy_param/Synechocysytis) of team Amsterdam to the international Genetically Engineered Machine Competition iGEM 2015 consisted of the extension of a commercial PBR allowing its operation as turbidostat. This project involved the University of Amsterdam, the Free University of Amsterdam, the Swammerdam Institute for Life Sciences (SILS), and several other institutions.
@@ -88,7 +88,8 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 	- Or manufacture yourself (maker lab / own laser cutter)
 *  Minimal number of required bonding connections
 *  Standard 10mm polystyrene cuvettes additionally required for light source / detector housing
-*  adhesive required for assembly
+*  Adhesive required for assembly
+*  Check the [Wiki](https://github.com/roblehmann/NinjaPBR/wiki/Pod-Assembly) for more details and images
 
 ![Controller Board](./img/template2.png)
 
@@ -111,6 +112,7 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 *  No lenses required
 *  Calibration curve of extinction to cell number required
 *  Extension prepared to use side-scattering to increase linear range and decrease dependency on cell morphology
+*  [Wiki](https://github.com/roblehmann/NinjaPBR/wiki/Measuring-Cell-Number) for more
 
 
 ###Python GUI
@@ -121,6 +123,7 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 *  Up- / download scripted light programs
 *  Scheduled reactor mode change (planned experiment start)
 *  Easy GUI customization using wxGlade
+*  [The Repository](https://github.com/roblehmann/pyNinjaPBR)
 
 ![Frist Experiment](./img/pyNinjaControl.png)
 

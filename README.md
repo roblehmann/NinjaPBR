@@ -136,3 +136,5 @@ Im looking for people who are interested in helping develop the NinjaPBR or appl
 ---
 #Author
 [Robert Lehmann](https://github.com/roblehmann)
+
+Check out [Celldeg.com](http://celldeg.com/) if you are interested in ultra-high density cultivation of cyanobacteria

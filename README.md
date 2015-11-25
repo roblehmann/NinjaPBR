@@ -1,5 +1,8 @@
 #NinjaPBR - The Photobioreactor for Cyanobacteria and Microalgae
 
+![Logo](https://github.com/roblehmann/NinjaPBR/blob/master/img/wiki/NinjaPBRsmall.jpg)
+
+
 NinjaPBR is an opensource (GPLv3) photobioreactor implementation to study the growth of cyanobacteria and microalgae in liquid cultures. It allows the online measurement of the number of cells under various environmental conditions.
 
 The firmware for the Arduino-based controller is located in this repository. The corresponding laser cutting templates and controller board Fritzing schematics are also provided here. The python-based graphical user interface can be found [here](https://github.com/roblehmann/pyNinjaPBR).

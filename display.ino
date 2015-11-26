@@ -466,10 +466,15 @@ void logging_set_screen()
   myGLCD.clrScr();
   setBoxModeBgCol();
   // Buttons des Hauptmenu setzen
-  main_but1 = myButtons.addButton(10,50,300,40,"On");
-  main_but2 = myButtons.addButton(10,90,300,40,"Off");
-  main_but3 = myButtons.addButton(10,130,300,40,"New File");
-  main_but4 = myButtons.addButton(10,170,300,40,"Back ");
+  if(SDlogging)
+    main_but1 = myButtons.addButton(10,10,300,40,"Off");
+  else
+    main_but1 = myButtons.addButton(10,10,300,40,"On");
+  main_but2 = myButtons.addButton(10,50,300,40,"New File");
+  main_but3 = myButtons.addButton(10,90,300,40,"Last Valid Log");
+  main_but4 = myButtons.addButton(10,130,300,40,"Remove Last Log");
+  
+  main_but5 = myButtons.addButton(10,170,300,40,"Back ");
   // Buttons anzeigen
   myButtons.drawButtons();
   // Einen Text schreiben
@@ -482,22 +487,40 @@ void logging_set_screen()
       m_press = myButtons.checkButtons();
       if (m_press == main_but1) // activate logging
       {
-        if(SDavail)
-          SDlogging = testLogFile();
+        // logging off, so check if can activate
+        if(!SDlogging)
+        {
+          if(SDavail)
+            SDlogging = testLogFile();
+        }
+        else // logging on, turn off
+          SDlogging = false;
       }
-      else if(m_press == main_but2) // deactivate logging
-      {
-        SDlogging = false;
-      }
-      else if(m_press==main_but3)  // new log file
+      else if(m_press==main_but2)  // new log file
       {
         if(SDavail) // if SD card is installed, find new log file name and test opening it
         {
-          findLogName();
+          findLogName(true);
           SDlogging = testLogFile();
         }
       }
-      else if(m_press==main_but4) // do nothing and return to previous menu
+      else if(m_press==main_but3)  // last active log file
+      {
+        if(SDavail) // if SD card is installed, find new log file name and test opening it
+        {
+          findLogName(false);
+          SDlogging = testLogFile();
+        }
+      }
+      else if(m_press==main_but4)  // remove last active log file
+      {
+        if(SDavail)
+        {
+          rmLastValidLog();
+          SDlogging = testLogFile();
+        }
+      }      
+      else if(m_press==main_but5) // do nothing and return to previous menu
         ;
       // always return to previous screen after button was hit
       return;

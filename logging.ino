@@ -116,7 +116,7 @@ void logToSD()
   //log measured values 
   if (!file.open(fileName, O_CREAT | O_APPEND | O_WRITE))
   {
-    sendError(F("error SD file.open"));
+    sendError(F("logToSD:error SD file.open"));
     return;
   } 
 
@@ -240,7 +240,7 @@ boolean initSD()
 /*----------------------- 
 create new log file name with consecutive numbering
 -----------------------*/
-boolean findLogName()
+boolean findLogName(boolean newFile)
 {
   boolean res = true;
   // init SD card for logging
@@ -249,8 +249,9 @@ boolean findLogName()
   if (BASE_NAME_SIZE > 6) {
     sendError("FILE_BASE_NAME too long");
   }
-  
+  char lastExisting[13];
   while (sd.exists(fileName)) {
+    strcpy(lastExisting, fileName);
     if (fileName[BASE_NAME_SIZE + 1] != '9') {
       fileName[BASE_NAME_SIZE + 1]++;
     } else if (fileName[BASE_NAME_SIZE] != '9') {
@@ -261,7 +262,28 @@ boolean findLogName()
       res = false;
     }
   }
+  if(!newFile)
+    strcpy(fileName, lastExisting);
   return(res);
+}
+
+/*----------------------- 
+remove last valid log file from SD card
+-----------------------*/
+boolean rmLastValidLog()
+{
+  // jump to last valid log file
+  findLogName(false);
+  //remove it
+  if(sd.exists(fileName))
+    sd.remove(fileName);
+  else
+    sendError(F("Error removing SD Log File"));
+  strcpy(fileName, FILE_BASE_NAME "00.csv");
+  // jump to last valid log file to use
+  findLogName(false);
+  sendMessage(F("removed SD Log File"));
+  sendMessage(fileName);
 }
 
 /*----------------------- 
@@ -270,7 +292,7 @@ test writing to the specified log file
 boolean testLogFile()
 {
   if (!file.open(fileName, O_CREAT | O_WRITE)) {
-    sendError(F("error SD file.open"));
+    sendError(F("TestLog: error SD file.open"));
     return(false);
   } 
   else

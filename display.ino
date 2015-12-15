@@ -64,6 +64,7 @@ void showData()
     // show reference values
     myGLCD.print((String)(long)refValues[j][0], startX + 50*j, 110);
     // show background values
+    myGLCD.print(F("    "), startX + 50*j, 125);
     myGLCD.print((String)(long)odValues[j][5], startX + 50*j, 125);
   }
  

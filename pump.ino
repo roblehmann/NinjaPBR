@@ -6,21 +6,19 @@ sample pods
 void pumpSetup()
 {
    // setup air pump
-  //  airValve.attach(airValvePin);
   pinMode(airValvePin, OUTPUT);
-  digitalWrite(airValvePin, LOW);
+  startAirPump();
+  
   // setup medium pump
   pinMode(mediumPumpPin, OUTPUT);
-  digitalWrite(mediumPumpPin, LOW);
+  stopMediumPump();
 }
 
 //---------   air supply part ---------//
 void startAirPump()
 {
-  // air by pump on/off control
   airPumpState = HIGH;
-  // air by pinch valv control
-//  airValve.write(airValveOpenAngle);
+  // air by pinch valve control
   digitalWrite(airValvePin, LOW);
 }
 
@@ -29,7 +27,6 @@ void stopAirPump()
   // air by pump on/off control
   airPumpState = LOW;
   // air by pinch valv control
-  //  airValve.write(airValveClosedAngle);
   digitalWrite(airValvePin, HIGH);
 }
 

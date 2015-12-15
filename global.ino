@@ -49,7 +49,9 @@ void sendHandshake()
   Serial.print(sep);
   Serial.print(numLeds);
   Serial.print(sep);
-  Serial.println(referenceValuesDone);
+  Serial.print(referenceValuesDone);
+  Serial.print(sep);
+  Serial.println(BIOREACTOR_MODE);
 }
 
 /*----------------------- 

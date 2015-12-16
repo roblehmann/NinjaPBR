@@ -184,7 +184,6 @@ void fetchTSLsensorData()
 // function manages storage of intensity values
 void storeTSLdata(int iChamber, uint16_t bb, uint16_t ir)
 {
-  // TODO: test effect of IR subtraction on the resulting value (does IR yield usable correction term for high-pass filter)
   if(readReferenceValues)
   {
     if(nLambda == -1) // ref background values, no need to bg subtraction

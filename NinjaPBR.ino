@@ -39,7 +39,7 @@ const int lightPins[] = {11,12,13};
 const int ledPins[] = {8, 10};
 
 //----------Number of Pods --------- //
-#define numChambers 2
+#define numChambers 3
 
 //----------CONSTANTS-GAS--------- //
 #define  airValvePin 9
@@ -50,7 +50,7 @@ const int ledPins[] = {8, 10};
 #define timerNotSet -1
 
 //----------CONSTANTS-TEMPERATURE--------- //
-#define PIN_TEMPERATURE_SENSOR_IN_LIQUID  19   // culture temperature
+#define TEMPERATURE_SENSOR_PIN  19   // culture temperature
 
 //----------TIMER DECLARATION--------- //
 Timer t;
@@ -93,6 +93,7 @@ float refValues[numChambers][ 6 ] = {65535, 65535, 65535, 65535, 65535, 65535};
 
 // emitter-specific brightness value. 
 // adjust this value to optimize for individual geometry
+// set to 100 for integration time 2 and sfh4550
 float emitterBrightness[ 5 ] = {100,162,255,255,255};
 
 // state flag, determining whether to measure reference value for OD calculation or OD values
@@ -127,7 +128,7 @@ bool SDlogging = false;
 //send handshakes until connected
 bool serialConnected = false;
 
-const int line_buffer_size = 120;
+const int line_buffer_size = 140;
 char buffer[line_buffer_size];
 String paramName;
 float  paramValue;
@@ -139,7 +140,11 @@ float  paramValue;
 void setup()  {
   // for serial input message
   inputString.reserve(50);
-  // initialize reactor functions
+
+  // initialize reactor mode and functions
+  bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
+  BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
+  
   initSerial();
   lightSetup();
   temperatureSetup();
@@ -149,9 +154,6 @@ void setup()  {
   setupDisplay();
   // update all the sensor data for once before doing the first log
   updateSensorLogValues();
-
-  bioreactorAncientMode = BIOREACTOR_STANDBY_MODE;
-  BIOREACTOR_MODE = BIOREACTOR_STANDBY_MODE;
 } 
 
 //----------------------------- //
@@ -180,6 +182,7 @@ void checkChangedReactorMode()
     case BIOREACTOR_STANDBY_MODE: 
       { 
         // to go into standby, need to switch off light, remove timers for day phase/light change
+        // open pinch valves - permant close-state causes damage
         startAirPump();
         // switch off light, remove timers
         stopSensorReadTimer();
@@ -310,7 +313,7 @@ void digestMessage()
   {
     // set flag to read reference values (without OD calculation)
     readReferenceValues = true;
-    odUpdate();
+    odUpdateStart();
   }
   else if(paramName == F("bp")) // receive brightness profile values
   {

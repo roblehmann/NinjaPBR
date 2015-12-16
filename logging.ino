@@ -325,6 +325,7 @@ void sendError(String msg)
 /*----------------------- 
 send the current data log to the computer
 -----------------------*/  
+size_t n;
 void sendLogData()
 {
   if(!SDavail)
@@ -333,18 +334,15 @@ void sendLogData()
     return;
   }
   sendMessage(fileName);
-  ifstream sdin(fileName);
-
-  while (sdin.getline(buffer, line_buffer_size, '\n') || sdin.gcount()) 
+  
+  if (!file.open(fileName, O_READ)) sendError(F("open LOG failed"));
+  
+  while ((n = file.fgets(buffer, line_buffer_size)) > 0) 
   {
-    if (sdin.fail()) {
-      // Partial long line
-      sdin.clear(sdin.rdstate() & ~ios_base::failbit);
-    } else if (sdin.eof()) {
-      // Partial final line  // sdin.fail() is false
-    }else
-      Serial.println((String)buffer);
+      // Print line number.
+      Serial.print(buffer);
   }
+  if (!file.close()) sendError(F("closing LOG failed"));
 }
 
 /*-------------------

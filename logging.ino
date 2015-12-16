@@ -379,6 +379,7 @@ boolean loadParameters()
     sdin.skipWhite();
     if (sdin.fail())
       sendError(F("Bad input in parameter file"));
+
     // error in line if not commas
 //      if (cs[j] != sep)
 //        sendError(F("Comma"));
@@ -396,11 +397,12 @@ boolean loadParameters()
   
   // set last reference values
   for(int i=0; i<numChambers; i++)
+  {
     for(int j=0; j<6; j++)
     {
-      refValues[i][j] = resArr[numChambers][j];
+      refValues[i][j] = resArr[i+1][j];
     }
-
+  }
   // sampling frequency
   sensorSamplingTime = resArr[numChambers + 1][0];
 
@@ -490,7 +492,7 @@ boolean saveParameters()
   }
   file.print(sensorSamplingTime);
   file.print(sep);
-  for(int j=0; j<3; j++)
+  for(int j = 0; j < 3; j++)
   {
       file.print(lightProfileIdx[j]);
       file.print(sep);

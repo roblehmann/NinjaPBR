@@ -1,4 +1,4 @@
-#NinjaPBR - The Photobioreactor for Cyanobacteria and Microalgae
+# NinjaPBR - The Photobioreactor for Cyanobacteria and Microalgae
 
 ![Logo](https://github.com/roblehmann/NinjaPBR/blob/master/img/wiki/NinjaPBRsmall.jpg)
 
@@ -9,7 +9,7 @@ The firmware for the Arduino-based controller is located in this repository. The
 
 Want to learn more? See the [wiki](https://github.com/roblehmann/NinjaPBR/wiki).
 
-##Motivation
+## Motivation
 One application of the NinjaPBR is the understanding of how cyanobacteria tell time. Some cyanobacterial strains predict the natural procession of light and dark phases during each day with an internal molecular clock consisting of the KaiA, B and C proteins. This clock evolved to accommodate the day length on earth of approximately 24h and can adapt to varying relative lengths of light and dark (LD) phases. The NinjaPBR allows the simulation of different day lengths, light and dark phase lengths, and also light brightness profiles over the subjective day. The observation of growth rates under extreme LD rhythms could indicate the limits of adaptibility of the circadian clock mechanism.
 
 The central measured variable, the number of cells in the liquid culture, is measured as usual by the attenuation of incident light on its path through the solution (optical density, OD). In short, NinjaPBR
@@ -37,9 +37,9 @@ The NinjaPBR is designed to use a single controller box to control multiple Samp
 *  Data transfer and control by computer GUI via USB
 
 
-#Preliminary Experiments
+# Preliminary Experiments
 
-###Batch Experiment with light/dark cycles
+### Batch Experiment with light/dark cycles
  The figure below shows the result of the following preliminary experiment:
  
 *  Minimal reactor setup with Synechococcus sp. PCC 7002 in optimized media
@@ -51,7 +51,7 @@ The NinjaPBR is designed to use a single controller box to control multiple Samp
 *  sampling frequency F<sub>samp</sub> = 1/5 min<sup>-1</sup>
 ![LD Batch Run](./img/batchExperimentLD.png)
 
-###Chemostat Experiment - Continuous dilution of culture with fresh media
+### Chemostat Experiment - Continuous dilution of culture with fresh media
 
 *  Growth rate adjusts to dilution rate, yielding steady state in cell number
 *  Experiment duration drastically extended up to months
@@ -66,24 +66,24 @@ The NinjaPBR is designed to use a single controller box to control multiple Samp
 ![Chemostat Run](./img/chemostatExperiment.png)
 
 ---
-#Inspiration
+# Inspiration
 
 There are already a range of great bioreactor and photobioreactor designs out there, here is a small selection. In addition, there are several other great instruments on github, such as the [NinjaPCR](https://github.com/hisashin/NinjaPCR) open source Thermocycler or a [plate reader](https://github.com/csbl/platereader).
 
-###Synechocystis Physiological Parameters
+### Synechocystis Physiological Parameters
 A small part pf the extensive [contribution](http://2015.igem.org/Team:Amsterdam/Project/Phy_param/Synechocysytis) of team Amsterdam to the international Genetically Engineered Machine Competition iGEM 2015 consisted of the extension of a commercial PBR allowing its operation as turbidostat. This project involved the University of Amsterdam, the Free University of Amsterdam, the Swammerdam Institute for Life Sciences (SILS), and several other institutions.
 
-###Biomonstaaar
+### Biomonstaaar
 The photobioreactor design called Biomonstaaar was developed as a part of the  SpaceGAMBIT program. It is documented on [SpaceGAMBIT](http://www.spacegambit.org/biomonstaaar-open-source-bioreactor/) and on [Instructables](http://www.instructables.com/id/Biomonstaaar/). The concept is to build an array of three photobioreactors, each of which is controlled by an Arduino. The resulting data are collected in a Raspberry Pi and then uploaded into the cloud.
 
-###Bertha
+### Bertha
 The Bertha bioreactor project of the École polytechnique fédérale de Lausanne (EPFL) employs many useful technologies, such as ZigBee Bluetooth modules for wireless data transfer. The code as well as physical designs are provided on [github](https://github.com/Bioreactor/Code-Bioreactor).
 
 
 ---
-#Instructions
+# Instructions
 
-###Pod Construction
+### Pod Construction
 
 * Sample pod built from 5mm thick PMMA sheet material
 * 2D templates for laser cutting are provided as EPS files in the templates sub-folder
@@ -96,7 +96,7 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 
 ![Controller Board](./img/template2.png)
 
-###Controller Based on Arduino
+### Controller Based on Arduino
 
 *  Arduino Mega + 3.2’’ touch screen with SD card slot
 *  Breakout board for connection of periphery to Arduino provided as Fritzing sketch in the controller sub-folder
@@ -107,7 +107,7 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 
 ![Controller Board](./img/controllerBoard.png)
 
-###Measurement of Cell Density
+### Measurement of Cell Density
 
 *  Standard attenuation measurement, comparable to benchtop spectrophotometer
 *  Through culture vessel, yielding 40mm optical path
@@ -118,7 +118,7 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 *  [Wiki](https://github.com/roblehmann/NinjaPBR/wiki/Measuring-Cell-Number) for more
 
 
-###Python GUI
+### Python GUI
 
 *  Download and display data from controller
 *  Online display when continuously connected
@@ -132,12 +132,12 @@ The Bertha bioreactor project of the École polytechnique fédérale de Lausanne
 
 
 ---
-#Contribute to NinjaPBR!
+# Contribute to NinjaPBR!
 
 Im looking for people who are interested in helping develop the NinjaPBR or apply it.
 
 ---
-#Author
+# Author
 [Robert Lehmann](https://github.com/roblehmann)
 
 Check out [Celldeg.com](http://celldeg.com/) if you are interested in ultra-high density cultivation of cyanobacteria
